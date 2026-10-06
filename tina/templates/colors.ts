@@ -1,5 +1,5 @@
 import type { Template } from 'tinacms'
-import { claroEscuro, descricao, rgba, slug } from '../campos'
+import { claroEscuro, descricao, nomeUnico, rgba, slug } from '../campos'
 
 export const colors: Template = {
   name: 'colors',
@@ -36,20 +36,7 @@ export const colors: Template = {
         defaultItem: { name: '', color: 'rgba(0, 0, 0, 1)' },
       },
       fields: [
-        {
-          name: 'name',
-          label: 'Nome',
-          type: 'string',
-          required: true,
-          ui: {
-            validate: (value?: string, todos?: any) => {
-              const s = slug(value ?? '')
-              if (!s) return 'Escreve um nome com letras ou números'
-              const iguais = (todos?.custom ?? []).filter((c: any) => slug(c?.name ?? '') === s).length
-              return iguais > 1 ? 'Já existe uma cor com este nome' : undefined
-            },
-          },
-        },
+        nomeUnico('custom', 'Já existe uma cor com este nome'),
         rgba('color', 'Cor'),
         {
           name: 'description',

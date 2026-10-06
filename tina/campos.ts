@@ -26,6 +26,22 @@ export const px = (name: string, label: string, min: number, max: number): TinaF
   },
 })
 
+/** Nome de um item da lista `lista` (ex.: "custom"): obrigatório e sem nomes que deem o mesmo slug (seriam a mesma variável CSS). */
+export const nomeUnico = (lista: string, repetido: string): TinaField => ({
+  name: 'name',
+  label: 'Nome',
+  type: 'string',
+  required: true,
+  ui: {
+    validate: (value?: string, todos?: any) => {
+      const s = slug(value ?? '')
+      if (!s) return 'Escreve um nome com letras ou números'
+      const iguais = (todos?.[lista] ?? []).filter((c: any) => slug(c?.name ?? '') === s).length
+      return iguais > 1 ? repetido : undefined
+    },
+  },
+})
+
 /** Cor em rgba (com transparência): seletor + opacidade + caixa de texto. */
 export const rgba = (name: string, label: string): TinaField => ({
   name,

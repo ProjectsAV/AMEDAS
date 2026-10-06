@@ -1,0 +1,10 @@
+{
+  "h1Size": 40,
+  "h2Size": 32,
+  "h3Size": 24,
+  "h4Size": 20,
+  "paragraphSize": 16,
+  "mainContentSize": 18,
+  "customSizes": [],
+  "_template": "text"
+}

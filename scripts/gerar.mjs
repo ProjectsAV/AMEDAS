@@ -1,9 +1,25 @@
 import { readdir, readFile, writeFile, mkdir, copyFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
+import { paginaInicial } from './pagina-inicial.mjs'
 
 // URL público do Pages, ex.: https://<owner>.github.io/AMEDAS
 const BASE = process.env.BASE_URL ?? ''
 const url = (p) => (!p ? undefined : /^https?:/.test(p) ? `url("${p}")` : `url("${BASE}${p}")`)
+
+// Nomes do painel (coleções e templates), lidos do schema compilado, para a página inicial.
+// Se faltar algum, usa-se o nome técnico.
+const schema = JSON.parse(await readFile('tina/tina-lock.json', 'utf8').catch(() => '{}')).schema
+const rotulos = Object.fromEntries(
+  (schema?.collections ?? []).map((c) => [
+    c.name,
+    { label: c.label, templates: Object.fromEntries((c.templates ?? []).map((t) => [t.name, t.label])) },
+  ]),
+)
+const rotulo = (colecao) => rotulos[colecao]?.label ?? colecao
+const rotuloTemplate = (colecao, template) => rotulos[colecao]?.templates[template] ?? template
+
+// Secções da página inicial: uma por coleção, com os links do que foi publicado.
+const seccoes = []
 
 // Igual ao slug() de tina/campos.ts: "Azul Marca" → "azul-marca"
 const slug = (nome) =>
@@ -24,6 +40,16 @@ const tamanhos = (p, t) => ({
 // Cores com versão clara e escura, pela ordem do formulário
 const PARES = ['background', 'text', 'h1', 'h2', 'h3', 'h4', 'h5', 'primary', 'secondary', 'tertiary', 'separator']
 
+// Tamanhos de texto, pela ordem do formulário: chave do JSON → sufixo da variável --font-size-*
+const TEXTOS = {
+  h1Size: 'h1',
+  h2Size: 'h2',
+  h3Size: 'h3',
+  h4Size: 'h4',
+  paragraphSize: 'paragraph',
+  mainContentSize: 'main-content',
+}
+
 // Coleção (pasta em conteudo/) → template (campo "_template" do JSON) → variáveis CSS.
 // Cada função devolve as variáveis do :root, ou { root, dark } quando há valores para o tema escuro.
 const colecoes = {
@@ -43,6 +69,16 @@ const colecoes = {
         root[v] = color
       }
       return { root, dark }
+    },
+    text: (t) => {
+      const root = {}
+      for (const [k, v] of Object.entries(TEXTOS)) root[`--font-size-${v}`] = `${t[k]}px`
+      for (const { name, size } of t.customSizes ?? []) {
+        const v = `--font-size-custom-${slug(name)}`
+        if (v in root) throw new Error(`Tamanho de texto personalizado repetido: "${name}" (${v})`)
+        root[v] = `${size}px`
+      }
+      return root
     },
   },
   button: {
@@ -82,6 +118,7 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
 
   const claras = []
   const escuras = []
+  const links = [{ nome: `${rotulo(colecao)} · CSS (todas as variáveis)`, href: `${colecao}/${colecao}.css` }]
   for (const file of (await readdir(dir)).sort()) {
     if (!file.endsWith('.json')) continue
     const tema = JSON.parse(await readFile(join(dir, file), 'utf8'))
@@ -93,7 +130,9 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
     claras.push(...declaracoes(file, root))
     if (dark && Object.keys(dark).length) escuras.push(...declaracoes(file, dark))
     await copyFile(join(dir, file), join(out, file))
+    links.push({ nome: `${rotulo(colecao)} · ${rotuloTemplate(colecao, tema._template)}`, href: `${colecao}/${file}` })
   }
+  seccoes.push({ titulo: rotulo(colecao), links })
 
   let css = `:root {\n${bloco(claras, '  ')}\n}\n`
   if (escuras.length) {
@@ -119,5 +158,15 @@ for (const colecao of soJson) {
   const ficheiros = (await readdir(dir).catch(() => [])).filter((f) => f.endsWith('.json')).sort()
   for (const file of ficheiros) await copyFile(join(dir, file), join(out, file))
   await writeFile(join(out, 'index.json'), `${JSON.stringify(ficheiros, null, 2)}\n`)
+  seccoes.push({
+    titulo: rotulo(colecao),
+    links: [
+      { nome: `${rotulo(colecao)} · lista de ficheiros`, href: `${colecao}/index.json` },
+      ...ficheiros.map((f) => ({ nome: `${rotulo(colecao)} · ${f.replace(/\.json$/, '')}`, href: `${colecao}/${f}` })),
+    ],
+  })
   console.log(`${dir}/ → ${out}/ (${ficheiros.length} ficheiros + index.json)`)
 }
+
+await writeFile(join('public', 'index.html'), paginaInicial(seccoes, BASE))
+console.log('public/index.html (página inicial)')
