@@ -4,7 +4,7 @@ Repositório de **conteúdo de design** gerido por pessoas não técnicas atrav�
 
 Não há aplicação nem framework: só o Tina, os conteúdos e o script `scripts/gerar.mjs`.
 
-**Estado (2026-10-06):** o projeto funciona em local, com o painel, a gravação e a geração do CSS testados. **Ainda não há commits nem repositório no GitHub**, e não existe projeto no TinaCloud. O workflow de publicação e o login em produção **nunca correram**.
+**Estado (2026-10-06):** o projeto funciona em local, com o painel, a gravação e a geração do CSS testados. O repositório público é `ProjectsAV/AMEDAS` (o Pages fica em `https://projectsav.github.io/AMEDAS/`), e o projeto TinaCloud `AMEDAS` já foi criado. O primeiro deploy falhou por falta dos secrets `TINA_CLIENT_ID` e `TINA_TOKEN`. O login em produção ainda não foi testado.
 
 ## Fluxo de dados
 
@@ -36,7 +36,6 @@ libs React (outros repositórios): var(--color-primary), var(--main-btn-radius)�
 | `tina/templates/*.ts` | Templates: os "tipos de documento" dentro de uma coleção. Cada JSON indica o seu em `_template`. |
 | `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`. Os campos novos devem usar estas funções. |
 | `tina/componentes/corRgba.ts` | Componente React próprio para cores rgba (ver [Cores](#cores-e-tema-escuro)). |
-| `tina/marca.ts` | Personalização do painel (título, logótipo, cor). **Não está em uso** (ver pontos de falha). |
 | `tina/tina-lock.json` | Schema compilado. É **gerado** pelo `tinacms dev` ou `build`, mas **tem de ir para o git**, porque o TinaCloud lê o schema a partir dele. |
 | `tina/__generated__/` | Cliente e tipos gerados. Ignorado no git; nunca se edita à mão. |
 | `conteudo/` | Os JSON editados pelo Tina. |
@@ -202,12 +201,12 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 - **`description` dos campos:** o Tina interpreta-a como HTML, e `<nome>` desaparece. Escreve exemplos sem `<…>`.
 - **`descricao(texto)`:** é um campo só de leitura que não grava valor. Não uses `descricao` como nome de um campo real no mesmo template.
 
-### 11. Marca do painel desligada
-`tina/marca.ts` existe e funcionava, injetando CSS sobre classes internas do Tina (`fill-tina-orange`, `bg-tina-orange-dark`). O `cmsCallback` que a chamava **foi retirado do `config.ts`** pelo utilizador. Ficou um `import { aplicarMarca }` sem uso e um comentário solto antes de `schema`.
+### 11. Marca do painel removida
+O painel usa o aspeto original da Tina. Houve uma personalização (`tina/marca.ts`, chamada pelo `cmsCallback` no `config.ts`) que injetava CSS sobre classes internas do Tina (`fill-tina-orange`, `bg-tina-orange-dark`). O utilizador retirou-a.
 
-Pergunta ao utilizador antes de religar a marca ou de apagar estes restos.
+Pede confirmação ao utilizador antes de a voltar a pôr. Se a voltares a pôr, confirma o aspeto depois de cada atualização do `tinacms`, porque as classes internas podem mudar. O ecrã de login do TinaCloud não é personalizável.
 
-Se a religares, confirma o aspeto depois de cada atualização do `tinacms`, porque as classes internas podem mudar. O ecrã de login do TinaCloud não é personalizável.
+Um `import` de um ficheiro que já não existe em `tina/config.ts` faz falhar o `tinacms dev` e o `build` (*Could not resolve*). Ao apagar um ficheiro de `tina/`, procura os `import` que apontam para ele.
 
 ### 12. Ambiente
 - **Node:** em local é o 26; o CI usa o 24; o `create-tina-app` exige o 22 ou o 24. Se algo da CLI do Tina falhar só em local, experimenta o Node 24.
@@ -224,7 +223,7 @@ Estados como `:hover` e o sublinhado da página ativa não funcionam com estilos
 - **`conteudo/`:** contém dados reais de quem edita. Altera estes ficheiros só quando a tarefa o pede e mantém os valores existentes.
 
 ## Pendente
-1. Primeiro commit; repositório `<owner>/AMEDAS` no GitHub; projeto no TinaCloud (Client ID, token, *Site URLs*); secrets; Pages com a fonte *GitHub Actions*.
+1. Secrets `TINA_CLIENT_ID` e `TINA_TOKEN` no repositório (`gh secret set`); confirmar que o TinaCloud indexou o `main`; Pages com a fonte *GitHub Actions*.
 2. Primeira execução real do `pages.yml` e do login em produção.
 3. Decidir o mapeamento das cores dos botões nas libs, por exemplo, o fundo do botão principal = `--color-primary`. Não há token para o texto sobre as cores principal, secundária e terciária.
 4. Confirmar em tina.io os limites do plano gratuito (utilizadores, modo editorial).
