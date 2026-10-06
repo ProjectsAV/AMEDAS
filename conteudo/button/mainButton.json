@@ -1,8 +1,8 @@
 {
-  "fontSize": 20,
+  "fontSize": 32,
   "paddingY": 10,
   "paddingX": 20,
   "radius": 8,
-  "_template": "mainButton",
-  "borderWidth": 3
+  "borderWidth": 3,
+  "_template": "mainButton"
 }
