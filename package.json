@@ -1,0 +1,17 @@
+{
+  "name": "amedas",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tinacms dev -c \"python3 -m http.server 3000 -d public\"",
+    "build": "tinacms build && node scripts/gerar.mjs",
+    "build:local": "tinacms build --local --skip-cloud-checks --skip-search-index --noTelemetry && node scripts/gerar.mjs"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@tinacms/cli": "^3.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tinacms": "^3.14.2"
+  }
+}

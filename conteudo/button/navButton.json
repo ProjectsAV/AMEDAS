@@ -1,0 +1,7 @@
+{
+  "_template": "navButton",
+  "fontSize": 14,
+  "paddingY": 8,
+  "paddingX": 12,
+  "indicatorHeight": 2
+}

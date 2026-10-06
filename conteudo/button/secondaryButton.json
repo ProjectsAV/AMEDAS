@@ -1,0 +1,8 @@
+{
+  "_template": "secondaryButton",
+  "fontSize": 16,
+  "paddingY": 10,
+  "paddingX": 20,
+  "radius": 8,
+  "borderWidth": 1
+}

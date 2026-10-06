@@ -1,0 +1,54 @@
+{
+  "background": {
+    "light": "rgba(255, 255, 255, 1)",
+    "dark": "rgba(17, 24, 39, 1)"
+  },
+  "text": {
+    "light": "rgba(17, 24, 39, 1)",
+    "dark": "rgba(243, 244, 246, 1)"
+  },
+  "h1": {
+    "light": "rgba(17, 24, 39, 1)",
+    "dark": "rgba(255, 255, 255, 1)"
+  },
+  "h2": {
+    "light": "rgba(31, 41, 55, 1)",
+    "dark": "rgba(243, 244, 246, 1)"
+  },
+  "h3": {
+    "light": "rgba(55, 65, 81, 1)",
+    "dark": "rgba(229, 231, 235, 1)"
+  },
+  "h4": {
+    "light": "rgba(75, 85, 99, 1)",
+    "dark": "rgba(209, 213, 219, 1)"
+  },
+  "h5": {
+    "light": "rgba(107, 114, 128, 1)",
+    "dark": "rgba(156, 163, 175, 1)"
+  },
+  "primary": {
+    "light": "rgba(37, 99, 235, 1)",
+    "dark": "rgba(96, 165, 250, 1)"
+  },
+  "secondary": {
+    "light": "rgba(124, 58, 237, 1)",
+    "dark": "rgba(167, 139, 250, 1)"
+  },
+  "tertiary": {
+    "light": "rgba(13, 148, 136, 1)",
+    "dark": "rgba(45, 212, 191, 1)"
+  },
+  "separator": {
+    "light": "rgba(17, 24, 39, 0.12)",
+    "dark": "rgba(255, 255, 255, 0.12)"
+  },
+  "custom": [
+    {
+      "name": "Blood",
+      "color": "rgba(146, 34, 34, 1)",
+      "description": ""
+    }
+  ],
+  "_template": "colors"
+}
