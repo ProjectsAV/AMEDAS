@@ -36,7 +36,7 @@ libs React (outros repositórios): var(--color-primary), var(--main-btn-radius)�
 | `tina/config.ts` | Entrada do Tina: lista de coleções, `basePath`, media e credenciais (vindas do ambiente). |
 | `tina/colecoes/*.ts` | Uma coleção por ficheiro. Definem a pasta, o formato, as permissões (`allowedActions`) e os templates ou campos. |
 | `tina/templates/*.ts` | Templates: os "tipos de documento" dentro de uma coleção. Cada JSON indica o seu em `_template`. |
-| `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`, `nomeUnico`. Os campos novos devem usar estas funções. |
+| `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`, `nomeUnico`, `nomeFicheiro`. Os campos novos devem usar estas funções. |
 | `tina/componentes/corRgba.ts` | Componente React próprio para cores rgba (ver [Cores](#cores-e-tema-escuro)). |
 | `tina/tina-lock.json` | Schema compilado. É **gerado** pelo `tinacms dev` (o `build:local` não o atualiza), mas **tem de ir para o git**, porque o TinaCloud lê o schema a partir dele. |
 | `tina/__generated__/` | Cliente e tipos gerados. Ignorado no git; nunca se edita à mão. |
@@ -53,7 +53,7 @@ libs React (outros repositórios): var(--color-primary), var(--main-btn-radius)�
 |---|---|---|---|---|
 | `tokens` (Tokens) | `conteudo/tokens/` | Fixos: `colors.json` e `text.json`. Não se pode criar nem apagar | Templates: `colors`, `text` | `tokens/tokens.css` + JSON |
 | `button` (Botões) | `conteudo/button/` | Fixos: `mainButton.json`, `secondaryButton.json`, `navButton.json` | Templates: `mainButton`, `secondaryButton`, `navButton` | `button/button.css` + JSON |
-| `elementos` (Elementos) | `conteudo/elementos/` | **Livres**: criar e apagar permitido, sem pastas | `fields` (sem templates): `items[]` com `{ type, content, language }` | `elementos/*.json` + `index.json` (sem CSS) |
+| `elementos` (Elementos) | `conteudo/elementos/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ type, content, language }` | `elementos/*.json` + `index.json` (sem CSS) |
 
 A **fonte de verdade da forma de cada JSON** são os templates e as coleções em `tina/`. O `gerar.mjs` tem de corresponder a eles; ver [Duas fontes de verdade](#1-duas-fontes-de-verdade-schema-e-gerador).
 
@@ -213,7 +213,13 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 ### 9. Coleção Elementos
 - **Ficheiro sem elementos:** é gravado como `{}`, sem `items`. Os consumidores devem tratar a falta de `items` como `[]`.
 - **Campos vazios:** um `type` ou `content` vazio pode ser omitido em vez de gravado como `""`.
-- **Nome do ficheiro:** passa por `slug()` (`ui.filename.parse`). Um nome só com símbolos dá uma string vazia.
+- **Nome do ficheiro:**
+  - O Tina só aceita `a-z A-Z 0-9 - _ . /` (regex `RELATIVE_PATH_REGEX` em `@tinacms/schema-tools`). Espaços nunca são aceites.
+  - O `ui.filename.parse` é `nomeFicheiro()` de `tina/campos.ts`: tira acentos, troca espaços e `/` por `-` e remove o resto, incluindo `.`. Mantém maiúsculas, `-` e `_`. A `/` fica de fora porque criaria pastas.
+  - O `parse` corre **a cada tecla**, no "Create New" e no Rename. Por isso não pode aparar `-` nas pontas nem transformar caracteres que se escrevem a meio do nome: o antigo `slug()` apagava o `-` final e não deixava escrever `a-b`. Não voltes a usar `slug()` aqui.
+  - O campo aparece primeiro no formulário (`showFirst`), com uma descrição em português (`ui.filename.description`, interpretada como HTML).
+  - Um nome só com símbolos dá uma string vazia, e o Tina responde *Required*.
+  - **Maiúsculas:** `Menu.json` e `menu.json` são ficheiros diferentes no Linux e no Pages (os URLs distinguem maiúsculas), mas colidem num clone em macOS ou Windows. Quem consome tem de pedir o nome exato.
 - **Publicação:** o gerador apaga `public/elementos/` e recria-o (para refletir ficheiros apagados) e escreve `index.json`, porque o Pages não lista pastas.
 - **`language` em falta:** elementos gravados antes de o campo existir, ou editados fora do painel, podem não ter `language`. O painel mostra-o vazio e não deixa gravar até ser escolhido (`required`). Os consumidores devem tratar a falta de `language` como `default`.
 - **Opção vazia no seletor:** o Tina acrescenta uma opção vazia antes das 12. É o `required` que impede gravá-la.

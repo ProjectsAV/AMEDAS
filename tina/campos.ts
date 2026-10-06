@@ -13,6 +13,18 @@ export const slug = (nome: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
+/**
+ * Nome de ficheiro escrito no painel: "Página Inicial" → "Pagina-Inicial".
+ * Corre a cada tecla (ui.filename.parse), por isso não apara os "-" das pontas: senão "a-b" não se conseguia escrever.
+ * Só deixa o que o Tina aceita (a-z, A-Z, 0-9, - e _), sem "/" (criaria pastas) nem ".".
+ */
+export const nomeFicheiro = (nome: string) =>
+  nome
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\s/]/g, '-')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+
 /** Número em px, com limites. */
 export const px = (name: string, label: string, min: number, max: number): TinaField => ({
   name,

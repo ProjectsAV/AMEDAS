@@ -1,5 +1,5 @@
 import type { Collection } from 'tinacms'
-import { descricao, slug } from '../campos'
+import { descricao, nomeFicheiro } from '../campos'
 
 // Idiomas de um elemento. "default" = sem idioma específico (serve para todos).
 const IDIOMAS = [
@@ -27,8 +27,15 @@ export const elementos: Collection = {
   ui: {
     // Pode criar e apagar ficheiros; pastas não, para manter tudo ao mesmo nível.
     allowedActions: { create: true, delete: true, createFolder: false, createNestedFolder: false },
-    // Nome do ficheiro sem pastas nem acentos: "Página Inicial" → "pagina-inicial"
-    filename: { parse: (nome) => slug(nome) },
+    // Nome do ficheiro sem pastas nem acentos: "Página Inicial" → "Pagina-Inicial". Também se aplica ao Rename.
+    // A descrição é HTML (ver AGENTS.md, ponto 10).
+    filename: {
+      showFirst: true,
+      parse: nomeFicheiro,
+      description:
+        'Nome do ficheiro, único. Pode ter letras maiúsculas e minúsculas, números, - e _.<br>' +
+        'Os espaços e a / passam a - e os acentos são retirados. Ex.: Pagina-Inicial, menu_topo',
+    },
   },
   fields: [
     descricao('Lista de elementos. Cada elemento tem um tipo e um conteúdo (ambos em texto) e um idioma.'),
