@@ -97,6 +97,8 @@ Os nomes das linhas (ex.: "Tokens · Cores") são as etiquetas do painel (`label
 
 Os URLs mostrados são absolutos com `BASE_URL` (no CI) e relativos sem ele (em local). Os links da página são sempre relativos, por isso funcionam nos dois casos.
 
+**O aspeto imita o painel do Tina:** só tema claro, laranja `#ec4815` / `#c2410c` / `#fff7ed`, os cinzentos do admin, a fonte Inter (Google Fonts) e botões redondos com sombra leve. As cores estão como variáveis no `:root` do `pagina-inicial.mjs`. Foram tiradas do CSS compilado do painel, `public/admin/assets/*.css` (classes `bg-tina-orange*` e `*-gray-*`); se uma atualização do `tinacms` mudar a paleta, vai lá buscar os valores novos. A página não usa o logótipo do Tina: o quadrado laranja com "A" é próprio.
+
 ### Convenções de nomes
 
 - **Chaves JSON e nomes de campos em inglês** (`fontSize`, `borderWidth`); **etiquetas e descrições do painel em português de Portugal**.

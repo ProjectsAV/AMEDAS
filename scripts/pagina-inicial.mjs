@@ -1,5 +1,6 @@
 // Página inicial do Pages (public/index.html): link para o painel e para tudo o que foi publicado.
 // Sem ela, https://<owner>.github.io/AMEDAS/ dá 404.
+// O aspeto imita o painel do Tina (cores e fonte tiradas do CSS do admin): claro, com laranja.
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -34,39 +35,56 @@ export const paginaInicial = (seccoes, base) => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AMEDAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <style>
     :root {
-      --fundo: #f6f7f9; --cartao: #fff; --texto: #111827; --suave: #6b7280; --borda: #e5e7eb;
-      --destaque: #2563eb; --destaque-texto: #fff; --codigo: #f3f4f6;
-      color-scheme: light dark;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --fundo: #0f1115; --cartao: #181b22; --texto: #f3f4f6; --suave: #9ca3af; --borda: #2a2f3a;
-        --destaque: #60a5fa; --destaque-texto: #0f1115; --codigo: #222733;
-      }
+      /* Paleta do painel do Tina (tina-orange e cinzentos do admin) */
+      --laranja: #ec4815; --laranja-escuro: #c2410c; --laranja-claro: #fff7ed;
+      --fundo: #f6f6f9; --cartao: #fff; --borda: #e1ddec; --cinza: #edecf3;
+      --texto: #252336; --texto-2: #433e52; --suave: #716c7f;
+      --sombra: 0 1px 3px 0 rgb(0 0 0 / .1), 0 1px 2px -1px rgb(0 0 0 / .1);
+      color-scheme: light;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--fundo); color: var(--texto); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    main { max-width: 820px; margin: 0 auto; padding: 40px 16px 64px; }
-    h1 { margin: 0 0 4px; font-size: 28px; }
-    header p { margin: 0 0 28px; color: var(--suave); }
+    body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.5 Inter, system-ui, sans-serif; }
+    .topo { background: var(--cartao); border-bottom: 1px solid var(--borda); }
+    .topo > div { max-width: 860px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+    .marca { width: 28px; height: 28px; border-radius: 8px; background: var(--laranja); color: #fff;
+      display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+    .topo span { font-weight: 600; font-size: 17px; letter-spacing: -.01em; }
+    main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+    h1 { margin: 0 0 4px; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+    header p { margin: 0 0 24px; color: var(--suave); }
     .painel { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
-      background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; padding: 20px; margin-bottom: 32px; }
-    .painel h2 { margin: 0; font-size: 18px; }
-    .painel p { margin: 4px 0 0; color: var(--suave); font-size: 14px; }
+      background: var(--laranja-claro); border: 1px solid #fed7aa; border-left: 4px solid var(--laranja);
+      border-radius: 8px; padding: 20px 22px; margin-bottom: 36px; }
+    .painel h2 { margin: 0; font-size: 17px; font-weight: 600; }
+    .painel p { margin: 4px 0 0; color: var(--texto-2); font-size: 14px; }
     section { margin-bottom: 28px; }
-    section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); margin: 0 0 8px; }
-    ul { list-style: none; margin: 0; padding: 0; background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; }
-    li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; }
+    section h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px;
+      font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); }
+    section h2::before { content: ""; width: 3px; height: 14px; border-radius: 2px; background: var(--laranja); }
+    ul { list-style: none; margin: 0; padding: 0; background: var(--cartao); border: 1px solid var(--borda);
+      border-radius: 8px; box-shadow: var(--sombra); overflow: hidden; }
+    li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px;
+      border-left: 3px solid transparent; transition: background .15s, border-color .15s; }
     li + li { border-top: 1px solid var(--borda); }
+    li:hover { background: var(--fundo); border-left-color: var(--laranja); }
     .info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-    code { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--suave); overflow-wrap: anywhere; }
+    .info strong { font-weight: 600; }
+    code { font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--suave); overflow-wrap: anywhere; }
     .acoes { display: flex; gap: 8px; flex-shrink: 0; }
-    .botao { display: inline-block; font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
-      border: 1px solid var(--borda); background: var(--codigo); color: var(--texto); text-decoration: none; white-space: nowrap; }
-    .botao:hover { border-color: var(--destaque); }
-    .principal { background: var(--destaque); color: var(--destaque-texto); border-color: var(--destaque); font-weight: 600; padding: 10px 18px; }
+    /* Botões como os do Tina: redondos, com sombra leve */
+    .botao { display: inline-block; font: 500 13px/1 Inter, system-ui, sans-serif; padding: 8px 14px; border-radius: 999px;
+      border: 1px solid var(--borda); background: var(--cartao); color: var(--texto-2); box-shadow: var(--sombra);
+      cursor: pointer; text-decoration: none; white-space: nowrap; transition: color .15s, border-color .15s, background .15s; }
+    .botao:hover { color: var(--laranja); border-color: var(--laranja); }
+    .botao:focus-visible { outline: 2px solid var(--laranja); outline-offset: 2px; }
+    .botao.copiado { color: var(--laranja-escuro); border-color: var(--laranja); background: var(--laranja-claro); }
+    .principal { background: var(--laranja-escuro); border-color: var(--laranja-escuro); color: #fff; font-size: 14px; font-weight: 600; padding: 11px 22px; }
+    .principal:hover { background: var(--laranja); border-color: var(--laranja); color: #fff; }
     footer { color: var(--suave); font-size: 13px; }
     @media (max-width: 560px) {
       li { flex-direction: column; align-items: stretch; }
@@ -75,9 +93,10 @@ export const paginaInicial = (seccoes, base) => {
   </style>
 </head>
 <body>
+  <div class="topo"><div><div class="marca">A</div><span>AMEDAS</span></div></div>
   <main>
     <header>
-      <h1>AMEDAS</h1>
+      <h1>Conteúdo publicado</h1>
       <p>Conteúdo de design editado no painel e publicado aqui para as libs.</p>
     </header>
 
@@ -100,10 +119,14 @@ ${seccoes.map(seccao).join('\n')}
       try {
         await navigator.clipboard.writeText(new URL(b.dataset.copiar, location.href).href)
         b.textContent = 'Copiado'
+        b.classList.add('copiado')
       } catch {
         b.textContent = 'Não foi possível copiar'
       }
-      setTimeout(() => (b.textContent = 'Copiar link'), 1500)
+      setTimeout(() => {
+        b.textContent = 'Copiar link'
+        b.classList.remove('copiado')
+      }, 1500)
     })
   </script>
 </body>
