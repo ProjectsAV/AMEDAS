@@ -38,17 +38,23 @@ export const px = (name: string, label: string, min: number, max: number): TinaF
   },
 })
 
-/** Nome de um item da lista `lista` (ex.: "custom"): obrigatório e sem nomes que deem o mesmo slug (seriam a mesma variável CSS). */
+/**
+ * Nome de um item de uma lista: obrigatório e sem nomes que deem o mesmo slug (seriam a mesma variável CSS).
+ * Os irmãos encontram-se pelo caminho do campo ("configurations.0.custom.2.name" → "configurations.0.custom"),
+ * para funcionar em listas dentro de listas. `lista` (ex.: "custom") só se usa se o Tina não der o caminho.
+ */
 export const nomeUnico = (lista: string, repetido: string): TinaField => ({
   name: 'name',
   label: 'Nome',
   type: 'string',
   required: true,
   ui: {
-    validate: (value?: string, todos?: any) => {
+    validate: (value?: string, todos?: any, meta?: { name?: string }) => {
       const s = slug(value ?? '')
       if (!s) return 'Escreve um nome com letras ou números'
-      const iguais = (todos?.[lista] ?? []).filter((c: any) => slug(c?.name ?? '') === s).length
+      const caminho = meta?.name ? meta.name.split('.').slice(0, -2) : [lista]
+      const itens = caminho.reduce((o: any, k) => o?.[k], todos) ?? []
+      const iguais = itens.filter((c: any) => slug(c?.name ?? '') === s).length
       return iguais > 1 ? repetido : undefined
     },
   },

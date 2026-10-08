@@ -37,7 +37,7 @@ const tamanhos = (p, t) => ({
   [`${p}-padding-x`]: `${t.paddingX}px`,
 })
 
-// Cores com versão clara e escura, pela ordem do formulário
+// Cores com versão clara e escura, pela ordem do formulário (igual a PARES em tina/templates/colors.ts)
 const PARES = ['background', 'text', 'h1', 'h2', 'h3', 'h4', 'h5', 'primary', 'secondary', 'tertiary', 'separator']
 
 // Tamanhos de texto, pela ordem do formulário: chave do JSON → sufixo da variável --font-size-*
@@ -54,19 +54,28 @@ const TEXTOS = {
 // Cada função devolve as variáveis do :root, ou { root, dark } quando há valores para o tema escuro.
 const colecoes = {
   tokens: {
+    // Cada configuração gera --color--<configuração>--<cor>, com as versões -light e -dark.
     colors: (t) => {
       const root = {}
       const dark = {}
-      for (const k of PARES) {
-        root[`--color-${k}-light`] = t[k].light
-        root[`--color-${k}-dark`] = t[k].dark
-        root[`--color-${k}`] = `var(--color-${k}-light)`
-        dark[`--color-${k}`] = `var(--color-${k}-dark)`
-      }
-      for (const { name, color } of t.custom ?? []) {
-        const v = `--color-custom-${slug(name)}`
-        if (v in root) throw new Error(`Cor personalizada repetida: "${name}" (${v})`)
-        root[v] = color
+      const nomes = new Set()
+      for (const c of t.configurations ?? []) {
+        const p = `--color--${slug(c.name ?? '')}--`
+        if (p === '--color----') throw new Error(`Configuração de cores sem nome: "${c.name ?? ''}"`)
+        if (nomes.has(p)) throw new Error(`Configuração de cores repetida: "${c.name}" (${p}…)`)
+        nomes.add(p)
+        for (const k of PARES) {
+          if (!c[k]?.light || !c[k]?.dark) throw new Error(`Configuração "${c.name}": falta a cor "${k}" (clara e escura)`)
+          root[`${p}${k}-light`] = c[k].light
+          root[`${p}${k}-dark`] = c[k].dark
+          root[`${p}${k}`] = `var(${p}${k}-light)`
+          dark[`${p}${k}`] = `var(${p}${k}-dark)`
+        }
+        for (const { name, color } of c.custom ?? []) {
+          const v = `${p}custom-${slug(name)}`
+          if (v in root) throw new Error(`Configuração "${c.name}": cor personalizada repetida "${name}" (${v})`)
+          root[v] = color
+        }
       }
       return { root, dark }
     },

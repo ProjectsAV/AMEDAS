@@ -23,7 +23,7 @@ https://<owner>.github.io/AMEDAS/                        (página inicial)
 https://<owner>.github.io/AMEDAS/<coleção>/<coleção>.css
    │  <link rel="stylesheet">
    ▼
-libs React (outros repositórios): var(--color-primary), var(--main-btn-radius)…
+libs React (outros repositórios): var(--color--default--primary), var(--main-btn-radius)…
 ```
 
 - **Em produção:** o painel publicado grava através do **TinaCloud**, que faz commit no GitHub. Esse commit dispara `.github/workflows/pages.yml`, que corre `npm run build` (o build do Tina mais o `gerar.mjs`) e publica a pasta `public/`.
@@ -51,7 +51,7 @@ libs React (outros repositórios): var(--color-primary), var(--main-btn-radius)�
 
 | Coleção (`name`) | Pasta | Ficheiros | Estrutura | Saída em `public/` |
 |---|---|---|---|---|
-| `tokens` (Tokens) | `conteudo/tokens/` | Fixos: `colors.json` e `text.json`. Não se pode criar nem apagar | Templates: `colors`, `text` | `tokens/tokens.css` + JSON |
+| `tokens` (Tokens) | `conteudo/tokens/` | Fixos: `colors.json` e `text.json`. Não se pode criar nem apagar (as configurações de cores dentro do `colors.json`, sim) | Templates: `colors`, `text` | `tokens/tokens.css` + JSON |
 | `button` (Botões) | `conteudo/button/` | Fixos: `mainButton.json`, `secondaryButton.json`, `navButton.json` | Templates: `mainButton`, `secondaryButton`, `navButton` | `button/button.css` + JSON |
 | `elementos` (Elementos) | `conteudo/elementos/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ type, content, language }` | `elementos/*.json` + `index.json` (sem CSS) |
 
@@ -60,11 +60,19 @@ A **fonte de verdade da forma de cada JSON** são os templates e as coleções e
 ### Cores e tema escuro
 
 - **Todas as cores são strings `rgba(r, g, b, a)`.** O seletor de cor do Tina (`ui.component: 'color'`) grava sempre `a: 1` e não tem controlo de opacidade. Por isso os campos de cor usam `rgba()` de `tina/campos.ts`, com o componente `CorRgba`: pré-visualização com fundo aos quadrados, seletor, opacidade e caixa de texto, validados pela regex de `parseRgba`. Mantém este componente em todas as cores novas.
+- **Configurações:** o `colors.json` continua a ser um ficheiro fixo, mas guarda uma lista `configurations[]` que quem edita pode aumentar ou reduzir à vontade. Cada configuração tem `name` e um conjunto completo de cores:
+  ```json
+  { "configurations": [ { "name": "Default", "background": { "light": "…", "dark": "…" }, "h1": { … }, "custom": [ … ] } ], "_template": "colors" }
+  ```
+  - As cores de cada configuração (`background`, `text`, `h1`…`h5`, `primary`, `secondary`, `tertiary`, `separator`) estão na constante `PARES`, que existe em `tina/templates/colors.ts` (com as etiquetas) e em `scripts/gerar.mjs`. **Têm de ficar iguais.**
+  - O `name` é obrigatório e único entre todas as configurações (`nomeUnico`, comparado pelo slug).
+  - Uma configuração nova criada com **+** começa com todas as cores preenchidas (`defaultItem`: `novaConfiguracao` no `colors.ts`). Ao acrescentar uma cor a `PARES`, acrescenta-a também aí e a todas as configurações do `colors.json`.
+  - A configuração que já existia antes desta mudança chama-se `Default`.
 - **`claroEscuro(name, label)`** grava `{ "light": "rgba(…)", "dark": "rgba(…)" }`.
-- **No CSS**, cada par gera:
-  - `--color-<k>-light` e `--color-<k>-dark`, com os valores;
-  - `--color-<k>`, a variável que as libs devem usar. Aponta para a versão clara no `:root` e para a escura em `@media (prefers-color-scheme: dark)` (exceto com `data-theme="light"`) e em `:root[data-theme="dark"]`.
-- **As cores personalizadas** (`custom[]`) geram `--color-custom-<slug(name)>`, uma só cor, sem versão escura. O campo `description` é só para orientação de quem edita e **não vai para o CSS**.
+- **No CSS**, com `p = --color--<slug(configuração)>--`, cada par gera:
+  - `<p><k>-light` e `<p><k>-dark`, com os valores (ex.: `--color--default--h1-light`);
+  - `<p><k>` (ex.: `--color--default--h1`), a variável que as libs devem usar. Aponta para a versão clara no `:root` e para a escura em `@media (prefers-color-scheme: dark)` (exceto com `data-theme="light"`) e em `:root[data-theme="dark"]`.
+- **As cores personalizadas** (`custom[]`, uma lista dentro de cada configuração) geram `<p>custom-<slug(name)>` (ex.: `--color--default--custom-blood`), uma só cor, sem versão escura. O nome só tem de ser único dentro da sua configuração. O campo `description` é só para orientação de quem edita e **não vai para o CSS**.
 - **Os botões não têm cores.** Só têm medidas (tamanhos, espaçamentos, arredondamento, espessuras) e o ícone. As cores vêm sempre dos Tokens.
 
 ### Tamanhos de texto
@@ -72,7 +80,7 @@ A **fonte de verdade da forma de cada JSON** são os templates e as coleções e
 O `text.json` (template `text`) guarda tamanhos em px:
 - **Fixos**, entre 1 e 450: `h1Size`, `h2Size`, `h3Size`, `h4Size`, `paragraphSize` e `mainContentSize`. No CSS geram `--font-size-h1` … `--font-size-h4`, `--font-size-paragraph` e `--font-size-main-content`. O mapa chave → variável está na constante `TEXTOS` do `gerar.mjs`.
 - **Personalizados** (`customSizes[]`), entre 0 e 450: `{ name, size, description? }`. Geram `--font-size-custom-<slug(name)>`. Como nas cores, o `name` é obrigatório e único (`nomeUnico`) e a `description` não vai para o CSS.
-- **Os nomes das chaves têm o sufixo `Size`** porque o template `colors` já tem `h1`…`h4` e `custom` como objetos; ver [Campos com o mesmo nome](#15-campos-com-o-mesmo-nome-em-templates-da-mesma-coleção).
+- **Os nomes das chaves têm o sufixo `Size`** porque o template `colors` tinha `h1`…`h4` e `custom` como objetos, antes de passarem para dentro de `configurations[]`; ver [Campos com o mesmo nome](#15-campos-com-o-mesmo-nome-em-templates-da-mesma-coleção). Mudar os nomes agora obriga a migrar o `text.json` e a constante `TEXTOS`.
 
 ### Elementos e idiomas
 
@@ -102,7 +110,7 @@ Os URLs mostrados são absolutos com `BASE_URL` (no CI) e relativos sem ele (em 
 ### Convenções de nomes
 
 - **Chaves JSON e nomes de campos em inglês** (`fontSize`, `borderWidth`); **etiquetas e descrições do painel em português de Portugal**.
-- **Variáveis CSS:** `--color-*` e `--font-size-*` para os tokens, e `--main-btn-*`, `--secondary-btn-*`, `--nav-btn-*` para os botões. Os números saem em `px`.
+- **Variáveis CSS:** `--color--<configuração>--*` e `--font-size-*` para os tokens, e `--main-btn-*`, `--secondary-btn-*`, `--nav-btn-*` para os botões. Os números saem em `px`.
 - **Comentários no código** em português, curtos, explicando o porquê.
 
 ## Comandos
@@ -200,7 +208,9 @@ Cada ponto tem: sintoma → causa → o que fazer.
 - **Seletor do Tina:** trocar `rgba()` por `ui.component: 'color'` perde a transparência em silêncio (opacidade sempre 1).
 - **Regex do `parseRgba`:** aceita `rgba(0-255, 0-255, 0-255, 0-1)` e nada mais. Rejeita hex, `rgb()`, percentagens e opacidade acima de 1. Um valor já gravado noutro formato aparece como inválido no painel.
 - **`slug()` duplicado:** existe em `tina/campos.ts` (validação de nomes repetidos e etiquetas) e em `scripts/gerar.mjs` (nomes das variáveis). **Têm de ficar iguais**, senão o painel mostra uma variável e o CSS gera outra.
-- **Nomes repetidos** (`custom[]` das cores e `customSizes[]` do texto): o `nomeUnico(lista, mensagem)` bloqueia a gravação com nomes que dão o mesmo slug. O primeiro argumento é o nome da lista no formulário; se renomeares a lista, muda-o também. O gerador volta a verificar e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
+- **Nomes repetidos** (`configurations[]` e o `custom[]` de cada uma, nas cores, e `customSizes[]` no texto): o `nomeUnico(lista, mensagem)` bloqueia a gravação com nomes que dão o mesmo slug.
+  - Os irmãos encontram-se pelo caminho do campo que o Tina passa ao `validate` (`meta.name`, ex.: `configurations.0.custom.2.name` → `configurations.0.custom`). É isso que faz funcionar a validação em listas dentro de listas. O argumento `lista` só se usa se faltar o caminho.
+  - O gerador volta a verificar (configurações repetidas ou sem nome, cores repetidas numa configuração, cor de `PARES` em falta) e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
 - **Sem versão escura:** as cores personalizadas não têm versão escura.
 
 ### 8. Permissões só no painel
@@ -243,7 +253,7 @@ Um `import` de um ficheiro que já não existe em `tina/config.ts` faz falhar o 
 - **GitHub Pages:** num repositório privado exige um plano pago, e o site publicado (CSS, JSON, imagens, `/admin`) é **público**. O `/admin` exige login do TinaCloud.
 
 ### 13. Do lado das libs
-O componente Button do projeto irmão `~/Secretária/Button-Tina` ainda lê `--btn-primary-bg`, `--btn-radius`, etc., nomes que este repositório já não gera. As libs têm de passar a ler `--color-*`, `--font-size-*` e `--<tipo>-btn-*`.
+O componente Button do projeto irmão `~/Secretária/Button-Tina` ainda lê `--btn-primary-bg`, `--btn-radius`, etc., nomes que este repositório já não gera. As libs têm de passar a ler `--color--<configuração>--*`, `--font-size-*` e `--<tipo>-btn-*`. As antigas `--color-<k>` (sem configuração) também já não existem.
 
 Estados como `:hover` e o sublinhado da página ativa não funcionam com estilos inline (`style={{…}}`): precisam de classes CSS na lib.
 
@@ -259,5 +269,5 @@ Estados como `:hover` e o sublinhado da página ativa não funcionam com estilos
 ## Pendente
 1. Secrets `TINA_CLIENT_ID` e `TINA_TOKEN` no repositório (`gh secret set`); confirmar que o TinaCloud indexou o `main`; Pages com a fonte *GitHub Actions*.
 2. Primeira execução real do `pages.yml` e do login em produção.
-3. Decidir o mapeamento das cores e dos tamanhos de texto nas libs, por exemplo, o fundo do botão principal = `--color-primary`. Não há token para o texto sobre as cores principal, secundária e terciária.
+3. Decidir o mapeamento das cores e dos tamanhos de texto nas libs, por exemplo, o fundo do botão principal = `--color--default--primary`, e como é que uma lib escolhe a configuração. Não há token para o texto sobre as cores principal, secundária e terciária.
 4. Confirmar em tina.io os limites do plano gratuito (utilizadores, modo editorial).
