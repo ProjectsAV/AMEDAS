@@ -53,7 +53,7 @@ libs React (outros repositórios): var(--color--default--primary), var(--main-bt
 |---|---|---|---|---|
 | `tokens` (Tokens) | `conteudo/tokens/` | Fixos: `colors.json` e `text.json`. Não se pode criar nem apagar (as configurações de cores dentro do `colors.json`, sim) | Templates: `colors`, `text` | `tokens/tokens.css` + JSON |
 | `button` (Botões) | `conteudo/button/` | Fixos: `mainButton.json`, `secondaryButton.json`, `navButton.json` | Templates: `mainButton`, `secondaryButton`, `navButton` | `button/button.css` + JSON |
-| `element` (Elementos) | `conteudo/element/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ title, content, language }` | `element/*.json` + `index.json` (sem CSS) |
+| `element` (Elementos) | `conteudo/element/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ title, contents[] }`; cada conteúdo é `{ content, language }` | `element/*.json` + `index.json` (sem CSS) |
 
 A **fonte de verdade da forma de cada JSON** são os templates e as coleções em `tina/`. O `gerar.mjs` tem de corresponder a eles; ver [Duas fontes de verdade](#1-duas-fontes-de-verdade-schema-e-gerador).
 
@@ -86,14 +86,25 @@ O `text.json` (template `text`) guarda tamanhos em px:
 
 Cada ficheiro em `conteudo/element/` tem a forma (publicado em `https://projectsav.github.io/AMEDAS/element/<ficheiro>.json`):
 ```json
-{ "items": [ { "title": "Boas-vindas", "content": "Bem-vindo", "language": "pt" } ] }
+{ "items": [
+  { "title": "titulo", "contents": [
+    { "content": "Bem-vindo", "language": "pt" },
+    { "content": "Welcome", "language": "en" }
+  ] }
+] }
 ```
-- **`title` e `content`:** texto livre. O `title` (etiqueta "Título") identifica o elemento. O `content` é editado numa caixa de várias linhas.
-- **`language`:** seletor obrigatório com os valores `default`, `en`, `pt`, `es`, `fr`, `it`, `de`, `sv`, `ru`, `pl`, `no`, `ja`. A lista, com as etiquetas em português, está na constante `IDIOMAS` em `tina/colecoes/element.ts`, que é a única fonte de verdade.
-  - `default` **não é um código de idioma**: significa "sem idioma específico, serve para todos". Os consumidores devem usá-lo como fallback quando não houver um elemento no idioma pedido.
+- **`title`:** texto livre (etiqueta "Título"). Identifica o elemento. Nada impede dois elementos com o mesmo `title` no mesmo ficheiro.
+- **`contents[]`:** a lista de conteúdos do elemento, **um por idioma**, com quantos quem edita quiser.
+  - **`content`:** texto livre, editado numa caixa de várias linhas.
+  - **`language`:** seletor obrigatório com os valores `default`, `en`, `pt`, `es`, `fr`, `it`, `de`, `sv`, `ru`, `pl`, `no`, `ja`. A lista, com as etiquetas em português, está na constante `IDIOMAS` em `tina/colecoes/element.ts`, que é a única fonte de verdade.
+  - `default` **não é um código de idioma**: significa "sem idioma específico, serve para todos". Os consumidores devem usá-lo como fallback quando não houver um conteúdo no idioma pedido.
   - Os códigos seguem ISO 639-1 (`no` = norueguês, `sv` = sueco, `ja` = japonês).
-- **Elementos novos** criados com **+** começam com `language: "default"` (`defaultItem`).
-- **Na lista do painel**, cada elemento aparece como `[idioma] título — início do conteúdo`. O prefixo `[idioma]` é omitido quando o idioma é `default`.
+- **Idioma único por elemento:** dois conteúdos do mesmo elemento não podem ter o mesmo `language`.
+  - No painel, o `idiomaUnico` (`ui.validate` do `language`, em `element.ts`) mostra *"Este idioma já existe neste elemento"* e bloqueia a gravação. Encontra os irmãos pelo caminho do campo (`items.0.contents.2.language` → `items.0.contents`), como o `nomeUnico`.
+  - O `gerar.mjs` volta a verificar (objeto `verificar`, por coleção `soJson`) e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
+  - O mesmo idioma pode repetir-se em elementos diferentes.
+- **Valores iniciais (`defaultItem`):** um elemento novo criado com **+** começa com um conteúdo em `default`; um conteúdo novo também começa em `default` e, se esse idioma já existir no elemento, o painel pede logo para o mudar.
+- **Na lista do painel:** cada elemento aparece como `título (pt, en)`, com os idiomas dos seus conteúdos, e cada conteúdo como `[idioma] início do conteúdo`.
 
 ### Página inicial
 
@@ -223,7 +234,7 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 
 ### 9. Coleção Elementos
 - **Ficheiro sem elementos:** é gravado como `{}`, sem `items`. Os consumidores devem tratar a falta de `items` como `[]`.
-- **Campos vazios:** um `title` ou `content` vazio pode ser omitido em vez de gravado como `""`.
+- **Campos vazios:** um `title` ou `content` vazio pode ser omitido em vez de gravado como `""`. Um elemento sem conteúdos pode não ter `contents`; os consumidores devem tratar a falta de `contents` como `[]`.
 - **Nome do ficheiro:**
   - O Tina só aceita `a-z A-Z 0-9 - _ . /` (regex `RELATIVE_PATH_REGEX` em `@tinacms/schema-tools`). Espaços nunca são aceites.
   - O `ui.filename.parse` é `nomeFicheiro()` de `tina/campos.ts`: tira acentos, troca espaços e `/` por `-` e remove o resto, incluindo `.`. Mantém maiúsculas, `-` e `_`. A `/` fica de fora porque criaria pastas.
@@ -232,11 +243,14 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
   - Um nome só com símbolos dá uma string vazia, e o Tina responde *Required*.
   - **Maiúsculas:** `Menu.json` e `menu.json` são ficheiros diferentes no Linux e no Pages (os URLs distinguem maiúsculas), mas colidem num clone em macOS ou Windows. Quem consome tem de pedir o nome exato.
 - **Publicação:** o gerador apaga `public/element/` e recria-o (para refletir ficheiros apagados) e escreve `index.json`, porque o Pages não lista pastas.
-- **`language` em falta:** elementos gravados antes de o campo existir, ou editados fora do painel, podem não ter `language`. O painel mostra-o vazio e não deixa gravar até ser escolhido (`required`). Os consumidores devem tratar a falta de `language` como `default`.
+- **`language` em falta:** conteúdos gravados antes de o campo existir, ou editados fora do painel, podem não ter `language`. O painel mostra-o vazio e não deixa gravar até ser escolhido (`required`). Os consumidores devem tratar a falta de `language` como `default`.
 - **Opção vazia no seletor:** o Tina acrescenta uma opção vazia antes das 12. É o `required` que impede gravá-la.
 - **Acrescentar ou remover um idioma:** muda só a constante `IDIOMAS`. Remover um código deixa os elementos que já o usam com um valor que o seletor não mostra; antes de remover, procura `"language": "<código>"` em `conteudo/element/`.
-- **Mudança de nomes (2026-10-12):** a coleção chamava-se `elementos` (pasta `conteudo/elementos/`, publicada em `/AMEDAS/elementos/`) e cada elemento tinha `type` em vez de `title`. Os JSON existentes foram migrados. Os consumidores que ainda leiam `elementos/` ou `type` deixam de encontrar os dados, e na API GraphQL a query passou a `elementConnection`.
-- **Idioma repetido:** nada impede dois elementos com o mesmo `title` e o mesmo `language` no mesmo ficheiro. Quem consome decide qual usar.
+- **Histórico da forma (2026-10-12), para quem consome:**
+  1. A coleção chamava-se `elementos` (pasta `conteudo/elementos/`, publicada em `/AMEDAS/elementos/`) e cada elemento tinha `type` em vez de `title`. Na API GraphQL a query passou a `elementConnection`.
+  2. Depois, cada elemento deixou de ter `content` e `language` diretos e passou a ter `contents[]`. Na migração, os elementos com o mesmo `title` no mesmo ficheiro juntaram-se num só (ex.: o `titulo` pt e en do `exemplo.json`).
+  Os JSON existentes foram migrados. Quem ainda lê `elementos/`, `type` ou `item.content` deixa de encontrar os dados.
+- **Título repetido:** nada impede dois elementos com o mesmo `title` no mesmo ficheiro. Quem consome decide qual usar.
 
 ### 10. Texto nas descrições
 - **`description` dos campos:** o Tina interpreta-a como HTML, e `<nome>` desaparece. Escreve exemplos sem `<…>`.

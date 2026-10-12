@@ -2,8 +2,12 @@
   "items": [
     {
       "title": "AAA",
-      "content": "3232",
-      "language": "default"
+      "contents": [
+        {
+          "content": "3232",
+          "language": "default"
+        }
+      ]
     }
   ]
 }

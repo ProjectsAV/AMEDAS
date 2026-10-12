@@ -2,8 +2,12 @@
   "items": [
     {
       "title": "Inicio Titulo",
-      "content": "Bem vindo ao website da Arva",
-      "language": "pt"
+      "contents": [
+        {
+          "content": "Bem vindo ao website da Arva",
+          "language": "pt"
+        }
+      ]
     }
   ]
 }

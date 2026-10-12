@@ -157,6 +157,17 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
 // com um index.json que lista os ficheiros (o Pages não deixa listar pastas).
 const soJson = ['element']
 
+// Verificações das coleções sem CSS (o painel já as faz; isto apanha JSON editado fora dele).
+const verificar = {
+  element: (dados, file) => {
+    for (const item of dados.items ?? []) {
+      const idiomas = (item.contents ?? []).map((c) => c.language ?? 'default')
+      const repetido = idiomas.find((l, i) => idiomas.indexOf(l) !== i)
+      if (repetido) throw new Error(`${file}: o elemento "${item.title ?? ''}" tem o idioma "${repetido}" repetido`)
+    }
+  },
+}
+
 for (const colecao of soJson) {
   const dir = join('conteudo', colecao)
   const out = join('public', colecao)
@@ -165,7 +176,10 @@ for (const colecao of soJson) {
   await mkdir(out, { recursive: true })
 
   const ficheiros = (await readdir(dir).catch(() => [])).filter((f) => f.endsWith('.json')).sort()
-  for (const file of ficheiros) await copyFile(join(dir, file), join(out, file))
+  for (const file of ficheiros) {
+    verificar[colecao]?.(JSON.parse(await readFile(join(dir, file), 'utf8')), `${dir}/${file}`)
+    await copyFile(join(dir, file), join(out, file))
+  }
   await writeFile(join(out, 'index.json'), `${JSON.stringify(ficheiros, null, 2)}\n`)
   seccoes.push({
     titulo: rotulo(colecao),
