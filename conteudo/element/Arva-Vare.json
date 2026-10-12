@@ -8,6 +8,15 @@
           "content": "Bem Vindo"
         }
       ]
+    },
+    {
+      "title": "Parque das Árvores content",
+      "contents": [
+        {
+          "language": "default",
+          "content": "A farmhouse and landscape project shaped by its wooded site — defined by thermowood cladding and a kinetic façade."
+        }
+      ]
     }
   ]
 }
