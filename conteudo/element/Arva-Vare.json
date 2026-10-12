@@ -1,20 +1,20 @@
 {
   "items": [
     {
-      "title": "Titulo",
-      "contents": [
-        {
-          "language": "pt",
-          "content": "Bem Vindo"
-        }
-      ]
-    },
-    {
       "title": "Parque das Árvores, Portugal",
       "contents": [
         {
           "language": "default",
           "content": "A farmhouse and landscape project shaped by its wooded site — defined by thermowood cladding and a kinetic façade."
+        }
+      ]
+    },
+    {
+      "title": "Herdade Aluz Azul, Portugal",
+      "contents": [
+        {
+          "language": "default",
+          "content": "A family house on Portugal's coastline — an ode to memory and tradition."
         }
       ]
     }
