@@ -1,7 +1,7 @@
 {
   "items": [
     {
-      "title": "Parque das Árvores, Portugal",
+      "name": "Parque das Árvores, Portugal",
       "contents": [
         {
           "language": "default",
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "title": "Herdade Aluz Azul, Portugal",
+      "name": "Herdade Aluz Azul, Portugal",
       "contents": [
         {
           "language": "default",

@@ -1,7 +1,7 @@
 {
   "items": [
     {
-      "title": "titulo",
+      "name": "titulo",
       "contents": [
         {
           "language": "pt",
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "title": "paragrafo",
+      "name": "paragrafo",
       "contents": [
         {
           "language": "default",

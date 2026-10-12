@@ -164,7 +164,7 @@ const TIPOS_BLOCO = ['title', 'text', 'eyebrow']
 const verificar = {
   element: (dados, file) => {
     for (const item of dados.items ?? []) {
-      const elemento = `${file}: o elemento "${item.title ?? ''}"`
+      const elemento = `${file}: o elemento "${item.name ?? ''}"`
       const idiomas = (item.contents ?? []).map((c) => c.language ?? 'default')
       const repetido = idiomas.find((l, i) => idiomas.indexOf(l) !== i)
       if (repetido) throw new Error(`${elemento} tem o idioma "${repetido}" repetido`)

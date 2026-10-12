@@ -45,7 +45,7 @@ const idiomaUnico = (value?: string, todos?: any, meta?: { name?: string }) => {
 }
 
 // Ficheiros livres: o utilizador cria e apaga ficheiros, e em cada um acrescenta ou remove
-// elementos { title, contents[] }, cada um com um conteúdo por idioma { language, blocks[] }.
+// elementos { name, contents[] }, cada um com um conteúdo por idioma { language, blocks[] }.
 // Os blocos { type, content } partilham o idioma do conteúdo onde estão.
 export const element: Collection = {
   name: 'element',
@@ -67,7 +67,7 @@ export const element: Collection = {
   },
   fields: [
     descricao(
-      'Lista de elementos. Cada elemento tem um título e uma lista de conteúdos, um por idioma (não pode haver dois conteúdos com o mesmo idioma). ' +
+      'Lista de elementos. Cada elemento tem um nome e uma lista de conteúdos, um por idioma (não pode haver dois conteúdos com o mesmo idioma). ' +
         'Cada conteúdo tem de 1 a 3 blocos (título, texto e antetítulo), todos no idioma do conteúdo.',
     ),
     {
@@ -76,16 +76,16 @@ export const element: Collection = {
       type: 'object',
       list: true,
       ui: {
-        // Na lista: "título (pt, en)"
+        // Na lista: "nome (pt, en)"
         itemProps: (item) => {
-          const titulo = item?.title || 'Sem título'
+          const nome = item?.name || 'Sem nome'
           const idiomas = (item?.contents ?? []).map((c: any) => c?.language).filter(Boolean)
-          return { label: idiomas.length ? `${titulo} (${idiomas.join(', ')})` : titulo }
+          return { label: idiomas.length ? `${nome} (${idiomas.join(', ')})` : nome }
         },
-        defaultItem: { title: '', contents: [{ language: 'default', blocks: [{ type: 'text', content: '' }] }] },
+        defaultItem: { name: '', contents: [{ language: 'default', blocks: [{ type: 'text', content: '' }] }] },
       },
       fields: [
-        { name: 'title', label: 'Título', type: 'string' },
+        { name: 'name', label: 'Nome', type: 'string' },
         {
           name: 'contents',
           label: 'Conteúdos',
