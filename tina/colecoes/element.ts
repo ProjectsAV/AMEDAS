@@ -18,7 +18,7 @@ const IDIOMAS = [
   { value: 'ja', label: 'Japonês (ja)' },
 ]
 
-// Tipos de bloco de um conteúdo. Cada tipo só pode aparecer uma vez por idioma, por isso o máximo de blocos é o número de tipos.
+// Tipos de bloco de um elemento. Cada tipo só pode aparecer uma vez por elemento, por isso o máximo de blocos é o número de tipos.
 // O scripts/gerar.mjs tem a mesma lista em TIPOS_BLOCO: têm de ficar iguais.
 const TIPOS = [
   { value: 'title', label: 'Título (title)' },
@@ -26,27 +26,29 @@ const TIPOS = [
   { value: 'eyebrow', label: 'Antetítulo (eyebrow)' },
 ]
 
-// Blocos de um conteúdo: pelo menos um, todos com tipo e sem tipos repetidos.
+// Blocos de um elemento: pelo menos um, todos com tipo e sem tipos repetidos.
 const blocosValidos = (value?: any[]) => {
   const tipos = (value ?? []).map((b) => b?.type)
   if (!tipos.length) return 'Acrescenta pelo menos um bloco'
   if (tipos.some((t) => !t)) return 'Escolhe o tipo de cada bloco'
-  return tipos.some((t, i) => tipos.indexOf(t) !== i) ? 'Cada tipo só pode aparecer uma vez neste idioma' : undefined
+  return tipos.some((t, i) => tipos.indexOf(t) !== i) ? 'Cada tipo só pode aparecer uma vez neste elemento' : undefined
 }
 
-// Idioma de um conteúdo: obrigatório e sem repetir dentro do mesmo elemento.
-// Os irmãos encontram-se pelo caminho do campo ("items.0.contents.2.language" → "items.0.contents").
+// Idioma de um elemento: obrigatório e sem repetir o par nome + idioma no mesmo ficheiro
+// (o mesmo nome em dois idiomas são duas versões do mesmo texto).
+// Os irmãos encontram-se pelo caminho do campo ("items.2.language" → "items").
 const idiomaUnico = (value?: string, todos?: any, meta?: { name?: string }) => {
   if (!value) return 'Escolhe um idioma'
-  const caminho = meta?.name ? meta.name.split('.').slice(0, -2) : []
+  const caminho = meta?.name ? meta.name.split('.').slice(0, -2) : ['items']
   const irmaos = caminho.reduce((o: any, k) => o?.[k], todos) ?? []
-  const iguais = irmaos.filter((c: any) => c?.language === value).length
-  return iguais > 1 ? 'Este idioma já existe neste elemento' : undefined
+  const este = meta?.name ? caminho.concat(meta.name.split('.').slice(-2, -1)).reduce((o: any, k) => o?.[k], todos) : undefined
+  const nome = (este?.name ?? '').trim()
+  const iguais = irmaos.filter((c: any) => c?.language === value && (c?.name ?? '').trim() === nome).length
+  return iguais > 1 ? 'Já existe um elemento com este nome neste idioma' : undefined
 }
 
 // Ficheiros livres: o utilizador cria e apaga ficheiros, e em cada um acrescenta ou remove
-// elementos { name, contents[] }, cada um com um conteúdo por idioma { language, blocks[] }.
-// Os blocos { type, content } partilham o idioma do conteúdo onde estão.
+// elementos { name, language, contents[] }. Os blocos { type, content } partilham o idioma do elemento.
 export const element: Collection = {
   name: 'element',
   label: 'Elementos',
@@ -67,8 +69,8 @@ export const element: Collection = {
   },
   fields: [
     descricao(
-      'Lista de elementos. Cada elemento tem um nome e uma lista de conteúdos, um por idioma (não pode haver dois conteúdos com o mesmo idioma). ' +
-        'Cada conteúdo tem de 1 a 3 blocos (título, texto e antetítulo), todos no idioma do conteúdo.',
+      'Lista de elementos. Cada elemento tem um nome, um idioma e de 1 a 3 blocos (título, texto e antetítulo). ' +
+        'Para ter o mesmo texto noutro idioma, cria outro elemento com o mesmo nome e o outro idioma.',
     ),
     {
       name: 'items',
@@ -76,47 +78,33 @@ export const element: Collection = {
       type: 'object',
       list: true,
       ui: {
-        // Na lista: "nome (pt, en)"
+        // Na lista: "nome [pt]"
         itemProps: (item) => {
           const nome = item?.name || 'Sem nome'
-          const idiomas = (item?.contents ?? []).map((c: any) => c?.language).filter(Boolean)
-          return { label: idiomas.length ? `${nome} (${idiomas.join(', ')})` : nome }
+          return { label: item?.language ? `${nome} [${item.language}]` : nome }
         },
-        defaultItem: { name: '', contents: [{ language: 'default', blocks: [{ type: 'text', content: '' }] }] },
+        defaultItem: { name: '', language: 'default', contents: [{ type: 'text', content: '' }] },
       },
       fields: [
-        { name: 'name', label: 'Nome', type: 'string' },
+        {
+          name: 'name',
+          label: 'Nome',
+          type: 'string',
+          required: true,
+          ui: { validate: (value?: string) => (value?.trim() ? undefined : 'Escreve um nome') },
+        },
+        { name: 'language', label: 'Idioma', type: 'string', required: true, options: IDIOMAS, ui: { validate: idiomaUnico } },
         {
           name: 'contents',
           label: 'Conteúdos',
-          description: 'Um conteúdo por idioma. Não pode haver dois com o mesmo idioma.',
+          description: 'De 1 a 3 blocos, um de cada tipo, todos no idioma escolhido acima.',
           type: 'object',
           list: true,
-          ui: {
-            // Na lista: "[idioma] início do primeiro bloco com texto"
-            itemProps: (item) => {
-              const idioma = item?.language ? `[${item.language}] ` : ''
-              const primeiro = (item?.blocks ?? []).find((b: any) => b?.content)?.content
-              const texto = primeiro ? String(primeiro).slice(0, 60) : 'Sem conteúdo'
-              return { label: `${idioma}${texto}` }
-            },
-            defaultItem: { language: 'default', blocks: [{ type: 'text', content: '' }] },
-          },
+          // O componente mostra os blocos lado a lado (tipo e conteúdo); os campos abaixo definem a forma do JSON.
+          ui: { component: blocos(TIPOS), validate: blocosValidos },
           fields: [
-            { name: 'language', label: 'Idioma', type: 'string', required: true, options: IDIOMAS, ui: { validate: idiomaUnico } },
-            {
-              name: 'blocks',
-              label: 'Blocos',
-              description: 'De 1 a 3 blocos, um de cada tipo, todos no idioma escolhido acima.',
-              type: 'object',
-              list: true,
-              // O componente mostra os blocos lado a lado (tipo e conteúdo); os campos abaixo definem a forma do JSON.
-              ui: { component: blocos(TIPOS), validate: blocosValidos },
-              fields: [
-                { name: 'type', label: 'Tipo', type: 'string', options: TIPOS },
-                { name: 'content', label: 'Conteúdo', type: 'string', ui: { component: 'textarea' } },
-              ],
-            },
+            { name: 'type', label: 'Tipo', type: 'string', options: TIPOS },
+            { name: 'content', label: 'Conteúdo', type: 'string', ui: { component: 'textarea' } },
           ],
         },
       ],

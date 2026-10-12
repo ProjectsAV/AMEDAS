@@ -1,7 +1,7 @@
 import { createElement as h } from 'react'
 import { wrapFieldsWithMeta } from 'tinacms'
 
-// Lista de blocos { type, content } de um conteúdo, um por linha: tipo à esquerda e texto à direita.
+// Lista de blocos { type, content } de um elemento (campo contents), um por linha: tipo à esquerda e texto à direita.
 // O Tina abre cada item de uma lista num formulário à parte; este componente mostra-os todos de uma vez.
 // Mínimo 1 bloco e no máximo um por tipo: o botão de apagar desativa-se com 1 e o de acrescentar quando não há tipos livres.
 // À direita, um cartão de pré-visualização, numa moldura de janela, mostra os blocos à medida que se escrevem.

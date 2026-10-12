@@ -163,21 +163,21 @@ const TIPOS_BLOCO = ['title', 'text', 'eyebrow']
 // Verificações das coleções sem CSS (o painel já as faz; isto apanha JSON editado fora dele).
 const verificar = {
   element: (dados, file) => {
+    const pares = new Set()
     for (const item of dados.items ?? []) {
-      const elemento = `${file}: o elemento "${item.name ?? ''}"`
-      const idiomas = (item.contents ?? []).map((c) => c.language ?? 'default')
-      const repetido = idiomas.find((l, i) => idiomas.indexOf(l) !== i)
-      if (repetido) throw new Error(`${elemento} tem o idioma "${repetido}" repetido`)
+      const nome = (item.name ?? '').trim()
+      const idioma = item.language ?? 'default'
+      const onde = `${file}: o elemento "${nome}" [${idioma}]`
+      if (!nome) throw new Error(`${file}: há um elemento sem nome`)
+      if (pares.has(`${nome}\n${idioma}`)) throw new Error(`${onde} está repetido (mesmo nome e idioma)`)
+      pares.add(`${nome}\n${idioma}`)
 
-      for (const conteudo of item.contents ?? []) {
-        const onde = `${elemento}, idioma "${conteudo.language ?? 'default'}",`
-        const tipos = (conteudo.blocks ?? []).map((b) => b.type)
-        if (!tipos.length) throw new Error(`${onde} não tem blocos`)
-        const errado = tipos.find((t) => !TIPOS_BLOCO.includes(t))
-        if (tipos.includes(errado)) throw new Error(`${onde} tem um bloco com tipo inválido: "${errado ?? ''}"`)
-        const tipoRepetido = tipos.find((t, i) => tipos.indexOf(t) !== i)
-        if (tipoRepetido) throw new Error(`${onde} tem o tipo "${tipoRepetido}" repetido`)
-      }
+      const tipos = (item.contents ?? []).map((b) => b.type)
+      if (!tipos.length) throw new Error(`${onde} não tem blocos`)
+      const errado = tipos.find((t) => !TIPOS_BLOCO.includes(t))
+      if (tipos.includes(errado)) throw new Error(`${onde} tem um bloco com tipo inválido: "${errado ?? ''}"`)
+      const tipoRepetido = tipos.find((t, i) => tipos.indexOf(t) !== i)
+      if (tipoRepetido) throw new Error(`${onde} tem o tipo "${tipoRepetido}" repetido`)
     }
   },
 }
