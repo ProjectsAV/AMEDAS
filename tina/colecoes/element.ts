@@ -18,11 +18,11 @@ const IDIOMAS = [
 ]
 
 // Ficheiros livres: o utilizador cria e apaga ficheiros, e em cada um
-// acrescenta ou remove elementos { type, content, language }.
-export const elementos: Collection = {
-  name: 'elementos',
+// acrescenta ou remove elementos { title, content, language }.
+export const element: Collection = {
+  name: 'element',
   label: 'Elementos',
-  path: 'conteudo/elementos',
+  path: 'conteudo/element',
   format: 'json',
   ui: {
     // Pode criar e apagar ficheiros; pastas não, para manter tudo ao mesmo nível.
@@ -38,24 +38,24 @@ export const elementos: Collection = {
     },
   },
   fields: [
-    descricao('Lista de elementos. Cada elemento tem um tipo e um conteúdo (ambos em texto) e um idioma.'),
+    descricao('Lista de elementos. Cada elemento tem um título e um conteúdo (ambos em texto) e um idioma.'),
     {
       name: 'items',
       label: 'Elementos',
       type: 'object',
       list: true,
       ui: {
-        // Na lista: "[idioma] tipo — início do conteúdo" (sem prefixo quando é "default")
+        // Na lista: "[idioma] título — início do conteúdo" (sem prefixo quando é "default")
         itemProps: (item) => {
           const idioma = item?.language && item.language !== 'default' ? `[${item.language}] ` : ''
-          const tipo = item?.type || 'Sem tipo'
+          const titulo = item?.title || 'Sem título'
           const texto = item?.content ? ` — ${String(item.content).slice(0, 60)}` : ''
-          return { label: `${idioma}${tipo}${texto}` }
+          return { label: `${idioma}${titulo}${texto}` }
         },
-        defaultItem: { type: '', content: '', language: 'default' },
+        defaultItem: { title: '', content: '', language: 'default' },
       },
       fields: [
-        { name: 'type', label: 'Tipo', type: 'string' },
+        { name: 'title', label: 'Título', type: 'string' },
         { name: 'content', label: 'Conteúdo', type: 'string', ui: { component: 'textarea' } },
         { name: 'language', label: 'Idioma', type: 'string', required: true, options: IDIOMAS },
       ],

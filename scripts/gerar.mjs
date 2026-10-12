@@ -155,7 +155,7 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
 
 // Coleções sem CSS: os JSON são só copiados para public/<coleção>/, para as libs os lerem,
 // com um index.json que lista os ficheiros (o Pages não deixa listar pastas).
-const soJson = ['elementos']
+const soJson = ['element']
 
 for (const colecao of soJson) {
   const dir = join('conteudo', colecao)

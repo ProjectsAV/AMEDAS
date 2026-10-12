@@ -2,7 +2,7 @@ node_modules
 public/admin
 public/button
 public/tokens
-public/elementos
+public/element
 tina/__generated__
 .env
 public/index.html

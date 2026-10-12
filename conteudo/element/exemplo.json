@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "title": "titulo", "content": "Bem-vindo", "language": "pt" },
+    { "title": "titulo", "content": "Welcome", "language": "en" },
+    { "title": "paragrafo", "content": "Este é um exemplo de conteúdo.", "language": "default" }
+  ]
+}

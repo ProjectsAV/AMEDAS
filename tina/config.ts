@@ -1,6 +1,6 @@
 import { defineConfig } from 'tinacms'
 import { button } from './colecoes/button'
-import { elementos } from './colecoes/elementos'
+import { element } from './colecoes/element'
 import { tokens } from './colecoes/tokens'
 
 export default defineConfig({
@@ -12,6 +12,6 @@ export default defineConfig({
   build: { outputFolder: 'admin', publicFolder: 'public', basePath: 'AMEDAS' },
   media: { tina: { mediaRoot: 'uploads', publicFolder: 'public' } },
   schema: {
-    collections: [tokens, button, elementos],
+    collections: [tokens, button, element],
   },
 })
