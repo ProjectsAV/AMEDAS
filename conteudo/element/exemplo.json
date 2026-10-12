@@ -4,12 +4,22 @@
       "title": "titulo",
       "contents": [
         {
-          "content": "Bem-vindo",
-          "language": "pt"
+          "language": "pt",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Bem-vindo"
+            }
+          ]
         },
         {
-          "content": "Welcome",
-          "language": "en"
+          "language": "en",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Welcome"
+            }
+          ]
         }
       ]
     },
@@ -17,8 +27,13 @@
       "title": "paragrafo",
       "contents": [
         {
-          "content": "Este é um exemplo de conteúdo.",
-          "language": "default"
+          "language": "default",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Este é um exemplo de conteúdo."
+            }
+          ]
         }
       ]
     }

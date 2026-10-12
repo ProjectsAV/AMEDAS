@@ -4,8 +4,13 @@
       "title": "AAA",
       "contents": [
         {
-          "content": "3232",
-          "language": "default"
+          "language": "default",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "3232"
+            }
+          ]
         }
       ]
     }

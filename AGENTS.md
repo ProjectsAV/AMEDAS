@@ -38,6 +38,7 @@ libs React (outros repositórios): var(--color--default--primary), var(--main-bt
 | `tina/templates/*.ts` | Templates: os "tipos de documento" dentro de uma coleção. Cada JSON indica o seu em `_template`. |
 | `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`, `nomeUnico`, `nomeFicheiro`. Os campos novos devem usar estas funções. |
 | `tina/componentes/corRgba.ts` | Componente React próprio para cores rgba (ver [Cores](#cores-e-tema-escuro)). |
+| `tina/componentes/blocos.ts` | Componente React próprio para os blocos dos Elementos, com o tipo e o conteúdo lado a lado e um cartão de pré-visualização à direita (ver [Elementos](#elementos-e-idiomas)). |
 | `tina/tina-lock.json` | Schema compilado. É **gerado** pelo `tinacms dev` (o `build:local` não o atualiza), mas **tem de ir para o git**, porque o TinaCloud lê o schema a partir dele. |
 | `tina/__generated__/` | Cliente e tipos gerados. Ignorado no git; nunca se edita à mão. |
 | `conteudo/` | Os JSON editados pelo Tina. |
@@ -53,7 +54,7 @@ libs React (outros repositórios): var(--color--default--primary), var(--main-bt
 |---|---|---|---|---|
 | `tokens` (Tokens) | `conteudo/tokens/` | Fixos: `colors.json` e `text.json`. Não se pode criar nem apagar (as configurações de cores dentro do `colors.json`, sim) | Templates: `colors`, `text` | `tokens/tokens.css` + JSON |
 | `button` (Botões) | `conteudo/button/` | Fixos: `mainButton.json`, `secondaryButton.json`, `navButton.json` | Templates: `mainButton`, `secondaryButton`, `navButton` | `button/button.css` + JSON |
-| `element` (Elementos) | `conteudo/element/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ title, contents[] }`; cada conteúdo é `{ content, language }` | `element/*.json` + `index.json` (sem CSS) |
+| `element` (Elementos) | `conteudo/element/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ title, contents[] }`; cada conteúdo é `{ language, blocks[] }` e cada bloco é `{ type, content }` | `element/*.json` + `index.json` (sem CSS) |
 
 A **fonte de verdade da forma de cada JSON** são os templates e as coleções em `tina/`. O `gerar.mjs` tem de corresponder a eles; ver [Duas fontes de verdade](#1-duas-fontes-de-verdade-schema-e-gerador).
 
@@ -88,14 +89,23 @@ Cada ficheiro em `conteudo/element/` tem a forma (publicado em `https://projects
 ```json
 { "items": [
   { "title": "titulo", "contents": [
-    { "content": "Bem-vindo", "language": "pt" },
-    { "content": "Welcome", "language": "en" }
+    { "language": "pt", "blocks": [
+      { "type": "eyebrow", "content": "Olá" },
+      { "type": "title", "content": "Bem-vindo" }
+    ] },
+    { "language": "en", "blocks": [ { "type": "title", "content": "Welcome" } ] }
   ] }
 ] }
 ```
 - **`title`:** texto livre (etiqueta "Título"). Identifica o elemento. Nada impede dois elementos com o mesmo `title` no mesmo ficheiro.
-- **`contents[]`:** a lista de conteúdos do elemento, **um por idioma**, com quantos quem edita quiser.
-  - **`content`:** texto livre, editado numa caixa de várias linhas.
+- **`contents[]`:** a lista de conteúdos do elemento, **um por idioma**, com quantos quem edita quiser. Cada conteúdo tem o `language` e os `blocks[]`.
+  - **`blocks[]`:** de 1 a 3 blocos `{ type, content }`, todos no idioma do conteúdo onde estão (o idioma não se repete em cada bloco).
+    - **`type`:** `title`, `text` ou `eyebrow`. Cada tipo só aparece uma vez por conteúdo, e é por isso que o máximo é 3. A lista, com as etiquetas em português (Título, Texto, Antetítulo), está na constante `TIPOS` em `tina/colecoes/element.ts`. O `gerar.mjs` tem a mesma lista em `TIPOS_BLOCO`: **têm de ficar iguais**.
+    - **`content`:** texto livre, editado numa caixa de várias linhas.
+    - **No painel**, os blocos não abrem num formulário à parte como as outras listas do Tina. O componente `blocos(TIPOS)` (`tina/componentes/blocos.ts`, no `ui.component` do campo `blocks`) mostra-os todos por baixo do idioma, um por linha, com o seletor do tipo à esquerda e o conteúdo à direita. O botão de apagar desativa-se quando só há um bloco; o **+ Acrescentar bloco** desativa-se quando já há blocos dos três tipos e cria o bloco novo com o primeiro tipo livre. Num seletor, os tipos usados noutros blocos aparecem desativados.
+    - **Pré-visualização:** o mesmo componente divide o campo em duas colunas: os blocos à esquerda e, à direita, um cartão que se atualiza enquanto se escreve. A coluna da direita fica fixa ao fazer scroll (`position: sticky`) e passa para baixo dos blocos quando o painel é estreito (`flexWrap`). Para não parecer parte do formulário, o cartão está dentro de uma moldura de janela: uma barra escura com três pontos, "Pré-visualização" e "ao vivo"; um fundo ponteado; e, no fim, uma nota a dizer que é só para orientação. A ordem é sempre antetítulo, título e texto, seja qual for a ordem dos blocos. Os tipos sem bloco não aparecem, e um bloco vazio mostra o nome do tipo a cinzento e em itálico. O aspeto de cada tipo está na constante `ESTILOS` de `blocos.ts`. É só uma ajuda visual com estilos fixos (o antetítulo usa o laranja do Tina): não usa os Tokens nem grava nada, e as libs podem mostrar o conteúdo de outra forma. Um tipo novo que não esteja em `ESTILOS` aparece no fim, com o estilo do texto.
+    - **Validação:** o `blocosValidos` (`ui.validate` do `blocks`) bloqueia a gravação sem blocos, com um bloco sem tipo ou com tipos repetidos. O `gerar.mjs` volta a verificar (sem blocos, tipo fora de `TIPOS_BLOCO`, tipo repetido) e lança erro.
+    - Os campos `type` e `content` declarados em `fields` continuam a definir a forma do JSON e da API GraphQL; o componente só muda o aspeto.
   - **`language`:** seletor obrigatório com os valores `default`, `en`, `pt`, `es`, `fr`, `it`, `de`, `sv`, `ru`, `pl`, `no`, `ja`. A lista, com as etiquetas em português, está na constante `IDIOMAS` em `tina/colecoes/element.ts`, que é a única fonte de verdade.
   - `default` **não é um código de idioma**: significa "sem idioma específico, serve para todos". Os consumidores devem usá-lo como fallback quando não houver um conteúdo no idioma pedido.
   - Os códigos seguem ISO 639-1 (`no` = norueguês, `sv` = sueco, `ja` = japonês).
@@ -103,8 +113,8 @@ Cada ficheiro em `conteudo/element/` tem a forma (publicado em `https://projects
   - No painel, o `idiomaUnico` (`ui.validate` do `language`, em `element.ts`) mostra *"Este idioma já existe neste elemento"* e bloqueia a gravação. Encontra os irmãos pelo caminho do campo (`items.0.contents.2.language` → `items.0.contents`), como o `nomeUnico`.
   - O `gerar.mjs` volta a verificar (objeto `verificar`, por coleção `soJson`) e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
   - O mesmo idioma pode repetir-se em elementos diferentes.
-- **Valores iniciais (`defaultItem`):** um elemento novo criado com **+** começa com um conteúdo em `default`; um conteúdo novo também começa em `default` e, se esse idioma já existir no elemento, o painel pede logo para o mudar.
-- **Na lista do painel:** cada elemento aparece como `título (pt, en)`, com os idiomas dos seus conteúdos, e cada conteúdo como `[idioma] início do conteúdo`.
+- **Valores iniciais (`defaultItem`):** um elemento novo criado com **+** começa com um conteúdo em `default` com um bloco `text` vazio; um conteúdo novo também começa em `default` com um bloco `text` e, se esse idioma já existir no elemento, o painel pede logo para o mudar.
+- **Na lista do painel:** cada elemento aparece como `título (pt, en)`, com os idiomas dos seus conteúdos, e cada conteúdo como `[idioma] início do primeiro bloco com texto`.
 
 ### Página inicial
 
@@ -234,7 +244,8 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 
 ### 9. Coleção Elementos
 - **Ficheiro sem elementos:** é gravado como `{}`, sem `items`. Os consumidores devem tratar a falta de `items` como `[]`.
-- **Campos vazios:** um `title` ou `content` vazio pode ser omitido em vez de gravado como `""`. Um elemento sem conteúdos pode não ter `contents`; os consumidores devem tratar a falta de `contents` como `[]`.
+- **Campos vazios:** um `title` ou `content` vazio pode ser omitido em vez de gravado como `""`. Um elemento sem conteúdos pode não ter `contents`; os consumidores devem tratar a falta de `contents` como `[]`. Um conteúdo tem sempre pelo menos um bloco (o painel e o gerador exigem-no).
+- **Acrescentar um tipo de bloco:** acrescenta-o a `TIPOS` em `element.ts` e a `TIPOS_BLOCO` no `gerar.mjs`, e o seu aspeto a `ESTILOS` em `blocos.ts`; o máximo de blocos passa a ser o número de tipos. Remover um tipo faz o gerador rejeitar os blocos que o usam: antes, procura `"type": "<tipo>"` em `conteudo/element/`.
 - **Nome do ficheiro:**
   - O Tina só aceita `a-z A-Z 0-9 - _ . /` (regex `RELATIVE_PATH_REGEX` em `@tinacms/schema-tools`). Espaços nunca são aceites.
   - O `ui.filename.parse` é `nomeFicheiro()` de `tina/campos.ts`: tira acentos, troca espaços e `/` por `-` e remove o resto, incluindo `.`. Mantém maiúsculas, `-` e `_`. A `/` fica de fora porque criaria pastas.
@@ -249,7 +260,8 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 - **Histórico da forma (2026-10-12), para quem consome:**
   1. A coleção chamava-se `elementos` (pasta `conteudo/elementos/`, publicada em `/AMEDAS/elementos/`) e cada elemento tinha `type` em vez de `title`. Na API GraphQL a query passou a `elementConnection`.
   2. Depois, cada elemento deixou de ter `content` e `language` diretos e passou a ter `contents[]`. Na migração, os elementos com o mesmo `title` no mesmo ficheiro juntaram-se num só (ex.: o `titulo` pt e en do `exemplo.json`).
-  Os JSON existentes foram migrados. Quem ainda lê `elementos/`, `type` ou `item.content` deixa de encontrar os dados.
+  3. Por fim, cada conteúdo deixou de ter `content` direto e passou a ter `blocks[]` com `{ type, content }`. Na migração, cada `content` passou a ser um bloco `text`.
+  Os JSON existentes foram migrados. Quem ainda lê `elementos/`, `item.type`, `item.content` ou `contents[].content` deixa de encontrar os dados; o texto está agora em `contents[].blocks[].content`.
 - **Título repetido:** nada impede dois elementos com o mesmo `title` no mesmo ficheiro. Quem consome decide qual usar.
 
 ### 10. Texto nas descrições

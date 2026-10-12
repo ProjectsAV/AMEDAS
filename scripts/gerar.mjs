@@ -157,13 +157,27 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
 // com um index.json que lista os ficheiros (o Pages não deixa listar pastas).
 const soJson = ['element']
 
+// Tipos de bloco dos Elementos. Têm de ficar iguais a TIPOS em tina/colecoes/element.ts.
+const TIPOS_BLOCO = ['title', 'text', 'eyebrow']
+
 // Verificações das coleções sem CSS (o painel já as faz; isto apanha JSON editado fora dele).
 const verificar = {
   element: (dados, file) => {
     for (const item of dados.items ?? []) {
+      const elemento = `${file}: o elemento "${item.title ?? ''}"`
       const idiomas = (item.contents ?? []).map((c) => c.language ?? 'default')
       const repetido = idiomas.find((l, i) => idiomas.indexOf(l) !== i)
-      if (repetido) throw new Error(`${file}: o elemento "${item.title ?? ''}" tem o idioma "${repetido}" repetido`)
+      if (repetido) throw new Error(`${elemento} tem o idioma "${repetido}" repetido`)
+
+      for (const conteudo of item.contents ?? []) {
+        const onde = `${elemento}, idioma "${conteudo.language ?? 'default'}",`
+        const tipos = (conteudo.blocks ?? []).map((b) => b.type)
+        if (!tipos.length) throw new Error(`${onde} não tem blocos`)
+        const errado = tipos.find((t) => !TIPOS_BLOCO.includes(t))
+        if (tipos.includes(errado)) throw new Error(`${onde} tem um bloco com tipo inválido: "${errado ?? ''}"`)
+        const tipoRepetido = tipos.find((t, i) => tipos.indexOf(t) !== i)
+        if (tipoRepetido) throw new Error(`${onde} tem o tipo "${tipoRepetido}" repetido`)
+      }
     }
   },
 }

@@ -5,7 +5,12 @@
       "contents": [
         {
           "language": "default",
-          "content": "A farmhouse and landscape project shaped by its wooded site — defined by thermowood cladding and a kinetic façade."
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A farmhouse and landscape project shaped by its wooded site — defined by thermowood cladding and a kinetic façade."
+            }
+          ]
         }
       ]
     },
@@ -14,7 +19,12 @@
       "contents": [
         {
           "language": "default",
-          "content": "A family house on Portugal's coastline — an ode to memory and tradition."
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A family house on Portugal's coastline — an ode to memory and tradition."
+            }
+          ]
         }
       ]
     }

@@ -1,5 +1,6 @@
 import type { Collection } from 'tinacms'
 import { descricao, nomeFicheiro } from '../campos'
+import { blocos } from '../componentes/blocos'
 
 // Idiomas de um elemento. "default" = sem idioma específico (serve para todos).
 const IDIOMAS = [
@@ -17,6 +18,22 @@ const IDIOMAS = [
   { value: 'ja', label: 'Japonês (ja)' },
 ]
 
+// Tipos de bloco de um conteúdo. Cada tipo só pode aparecer uma vez por idioma, por isso o máximo de blocos é o número de tipos.
+// O scripts/gerar.mjs tem a mesma lista em TIPOS_BLOCO: têm de ficar iguais.
+const TIPOS = [
+  { value: 'title', label: 'Título (title)' },
+  { value: 'text', label: 'Texto (text)' },
+  { value: 'eyebrow', label: 'Antetítulo (eyebrow)' },
+]
+
+// Blocos de um conteúdo: pelo menos um, todos com tipo e sem tipos repetidos.
+const blocosValidos = (value?: any[]) => {
+  const tipos = (value ?? []).map((b) => b?.type)
+  if (!tipos.length) return 'Acrescenta pelo menos um bloco'
+  if (tipos.some((t) => !t)) return 'Escolhe o tipo de cada bloco'
+  return tipos.some((t, i) => tipos.indexOf(t) !== i) ? 'Cada tipo só pode aparecer uma vez neste idioma' : undefined
+}
+
 // Idioma de um conteúdo: obrigatório e sem repetir dentro do mesmo elemento.
 // Os irmãos encontram-se pelo caminho do campo ("items.0.contents.2.language" → "items.0.contents").
 const idiomaUnico = (value?: string, todos?: any, meta?: { name?: string }) => {
@@ -28,7 +45,8 @@ const idiomaUnico = (value?: string, todos?: any, meta?: { name?: string }) => {
 }
 
 // Ficheiros livres: o utilizador cria e apaga ficheiros, e em cada um acrescenta ou remove
-// elementos { title, contents[] }, cada um com um conteúdo por idioma { content, language }.
+// elementos { title, contents[] }, cada um com um conteúdo por idioma { language, blocks[] }.
+// Os blocos { type, content } partilham o idioma do conteúdo onde estão.
 export const element: Collection = {
   name: 'element',
   label: 'Elementos',
@@ -49,7 +67,8 @@ export const element: Collection = {
   },
   fields: [
     descricao(
-      'Lista de elementos. Cada elemento tem um título e uma lista de conteúdos, um por idioma (não pode haver dois conteúdos com o mesmo idioma).',
+      'Lista de elementos. Cada elemento tem um título e uma lista de conteúdos, um por idioma (não pode haver dois conteúdos com o mesmo idioma). ' +
+        'Cada conteúdo tem de 1 a 3 blocos (título, texto e antetítulo), todos no idioma do conteúdo.',
     ),
     {
       name: 'items',
@@ -63,7 +82,7 @@ export const element: Collection = {
           const idiomas = (item?.contents ?? []).map((c: any) => c?.language).filter(Boolean)
           return { label: idiomas.length ? `${titulo} (${idiomas.join(', ')})` : titulo }
         },
-        defaultItem: { title: '', contents: [{ content: '', language: 'default' }] },
+        defaultItem: { title: '', contents: [{ language: 'default', blocks: [{ type: 'text', content: '' }] }] },
       },
       fields: [
         { name: 'title', label: 'Título', type: 'string' },
@@ -74,17 +93,30 @@ export const element: Collection = {
           type: 'object',
           list: true,
           ui: {
-            // Na lista: "[idioma] início do conteúdo"
+            // Na lista: "[idioma] início do primeiro bloco com texto"
             itemProps: (item) => {
               const idioma = item?.language ? `[${item.language}] ` : ''
-              const texto = item?.content ? String(item.content).slice(0, 60) : 'Sem conteúdo'
+              const primeiro = (item?.blocks ?? []).find((b: any) => b?.content)?.content
+              const texto = primeiro ? String(primeiro).slice(0, 60) : 'Sem conteúdo'
               return { label: `${idioma}${texto}` }
             },
-            defaultItem: { content: '', language: 'default' },
+            defaultItem: { language: 'default', blocks: [{ type: 'text', content: '' }] },
           },
           fields: [
             { name: 'language', label: 'Idioma', type: 'string', required: true, options: IDIOMAS, ui: { validate: idiomaUnico } },
-            { name: 'content', label: 'Conteúdo', type: 'string', ui: { component: 'textarea' } },
+            {
+              name: 'blocks',
+              label: 'Blocos',
+              description: 'De 1 a 3 blocos, um de cada tipo, todos no idioma escolhido acima.',
+              type: 'object',
+              list: true,
+              // O componente mostra os blocos lado a lado (tipo e conteúdo); os campos abaixo definem a forma do JSON.
+              ui: { component: blocos(TIPOS), validate: blocosValidos },
+              fields: [
+                { name: 'type', label: 'Tipo', type: 'string', options: TIPOS },
+                { name: 'content', label: 'Conteúdo', type: 'string', ui: { component: 'textarea' } },
+              ],
+            },
           ],
         },
       ],
