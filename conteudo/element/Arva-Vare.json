@@ -61,6 +61,24 @@
           ]
         }
       ]
+    },
+    {
+      "name": "ALUZ LUSA",
+      "contentBlock": [
+        {
+          "language": "default",
+          "contents": [
+            {
+              "type": "title",
+              "content": "ALUZ LUSA"
+            },
+            {
+              "type": "text",
+              "content": "Freestanding lighting fixtures in solid wood, powered by the sun they stand under — autonomous light for gardens, patios, and shared spaces."
+            }
+          ]
+        }
+      ]
     }
   ]
 }
