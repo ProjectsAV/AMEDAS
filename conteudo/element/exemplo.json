@@ -2,19 +2,14 @@
   "items": [
     {
       "name": "titulo",
-      "language": "pt",
       "contents": [
         {
+          "language": "pt",
           "type": "text",
           "content": "Bem-vindo"
-        }
-      ]
-    },
-    {
-      "name": "titulo",
-      "language": "en",
-      "contents": [
+        },
         {
+          "language": "en",
           "type": "text",
           "content": "Welcome"
         }
@@ -22,9 +17,9 @@
     },
     {
       "name": "paragrafo",
-      "language": "default",
       "contents": [
         {
+          "language": "default",
           "type": "text",
           "content": "Este é um exemplo de conteúdo."
         }

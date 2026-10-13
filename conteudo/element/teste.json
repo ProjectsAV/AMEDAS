@@ -2,9 +2,9 @@
   "items": [
     {
       "name": "AAA",
-      "language": "default",
       "contents": [
         {
+          "language": "default",
           "type": "text",
           "content": "3232"
         }
