@@ -171,15 +171,19 @@ const verificar = {
       if (nomes.has(nome)) throw new Error(`${onde} está repetido`)
       nomes.add(nome)
 
-      const blocos = item.contents ?? []
-      if (!blocos.length) throw new Error(`${onde} não tem blocos`)
-      const pares = new Set()
-      for (const b of blocos) {
-        if (!b.language) throw new Error(`${onde} tem um bloco sem idioma`)
-        if (!TIPOS_BLOCO.includes(b.type)) throw new Error(`${onde} tem um bloco com tipo inválido: "${b.type ?? ''}"`)
-        const par = `${b.language}\n${b.type}`
-        if (pares.has(par)) throw new Error(`${onde} tem o tipo "${b.type}" repetido no idioma "${b.language}"`)
-        pares.add(par)
+      const seccoes = item.contentBlock ?? []
+      if (!seccoes.length) throw new Error(`${onde} não tem idiomas`)
+      const idiomas = new Set()
+      for (const c of seccoes) {
+        if (!c.language) throw new Error(`${onde} tem um conteúdo sem idioma`)
+        if (idiomas.has(c.language)) throw new Error(`${onde} tem o idioma "${c.language}" repetido`)
+        idiomas.add(c.language)
+        const tipos = (c.contents ?? []).map((b) => b.type)
+        if (!tipos.length) throw new Error(`${onde} [${c.language}] não tem blocos`)
+        const errado = tipos.find((t) => !TIPOS_BLOCO.includes(t))
+        if (tipos.includes(errado)) throw new Error(`${onde} [${c.language}] tem um bloco com tipo inválido: "${errado ?? ''}"`)
+        const repetido = tipos.find((t, i) => tipos.indexOf(t) !== i)
+        if (repetido) throw new Error(`${onde} [${c.language}] tem o tipo "${repetido}" repetido`)
       }
     }
   },

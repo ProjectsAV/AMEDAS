@@ -1,14 +1,13 @@
 import { createElement as h } from 'react'
 import { wrapFieldsWithMeta } from 'tinacms'
 
-// Lista de blocos { language, type, content } de um elemento (campo contents). O JSON é plano, mas o painel
-// agrupa os blocos por idioma: uma secção por idioma, com o idioma em cima, os blocos (tipo e conteúdo) à
-// esquerda e a pré-visualização à direita. O Tina abre cada item de uma lista num formulário à parte; este
-// componente mostra tudo de uma vez, para se ver com scroll.
-// Mínimo 1 secção e 1 bloco por secção; em cada secção, cada tipo só uma vez (no máximo um bloco por tipo).
+// Idiomas de um elemento (campo contentBlock): uma secção por { language, contents[] }, com o idioma em cima,
+// os blocos { type, content } à esquerda e a pré-visualização à direita. O Tina abre cada item de uma lista
+// num formulário à parte; este componente mostra tudo de uma vez, para se ver com scroll.
+// Mínimo 1 secção e 1 bloco por secção; cada idioma numa só secção e, em cada secção, cada tipo só uma vez.
 
 type Opcao = { value: string; label: string }
-type Bloco = { language?: string; type?: string; content?: string }
+type Bloco = { type?: string; content?: string }
 
 const caixa = {
   padding: '8px 10px',
@@ -131,34 +130,20 @@ const cartao = (lista: Bloco[], tipos: Opcao[]) => {
   )
 }
 
+type Seccao = { language?: string; contents?: Bloco[] }
+
 const etiqueta = (texto: string) =>
   h('span', { style: { fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' } }, texto)
 
-type Seccao = { language: string; blocos: Bloco[] }
-
 export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
   wrapFieldsWithMeta(({ input }: any) => {
-    const lista: Bloco[] = Array.isArray(input.value) ? input.value : []
-    // Secções pela ordem em que cada idioma aparece pela primeira vez. Um bloco sem idioma fica na secção "".
-    const seccoes: Seccao[] = []
-    for (const b of lista) {
-      const language = b?.language ?? ''
-      const s = seccoes.find((x) => x.language === language)
-      if (s) s.blocos.push(b)
-      else seccoes.push({ language, blocos: [b] })
-    }
-    // Volta a gravar a lista plana, com os blocos de cada secção seguidos.
-    const gravar = (novas: Seccao[]) =>
-      input.onChange(
-        novas.flatMap((s) => s.blocos.map((b) => ({ language: s.language, type: b?.type, content: b?.content ?? '' }))),
-      )
-    const mudarSeccao = (i: number, parte: Partial<Seccao>) => gravar(seccoes.map((s, j) => (j === i ? { ...s, ...parte } : s)))
-    const usados = seccoes.map((s) => s.language)
+    const seccoes: Seccao[] = Array.isArray(input.value) ? input.value : []
+    const mudarSeccao = (i: number, parte: Seccao) => input.onChange(seccoes.map((s, j) => (j === i ? { ...s, ...parte } : s)))
+    const usados = seccoes.map((s) => s?.language)
     const idiomaLivre = idiomas.find((l) => !usados.includes(l.value))
-    const tipoLivre = (s: Seccao) => tipos.find((t) => !s.blocos.some((b) => b?.type === t.value))
 
-    const linha = (s: Seccao, i: number) => (b: Bloco, k: number) => {
-      const mudar = (parte: Bloco) => mudarSeccao(i, { blocos: s.blocos.map((x, j) => (j === k ? { ...x, ...parte } : x)) })
+    const linha = (i: number, blocos: Bloco[]) => (b: Bloco, k: number) => {
+      const mudar = (parte: Bloco) => mudarSeccao(i, { contents: blocos.map((x, j) => (j === k ? { ...x, ...parte } : x)) })
       return h(
         'div',
         { key: k, style: { display: 'flex', alignItems: 'flex-start', gap: 10 } },
@@ -174,7 +159,7 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
             ...tipos.map((t) =>
               h(
                 'option',
-                { key: t.value, value: t.value, disabled: s.blocos.some((x, j) => j !== k && x?.type === t.value) },
+                { key: t.value, value: t.value, disabled: blocos.some((x, j) => j !== k && x?.type === t.value) },
                 t.label,
               ),
             ),
@@ -196,11 +181,11 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
           'button',
           {
             type: 'button',
-            title: s.blocos.length > 1 ? 'Apagar bloco' : 'Cada idioma tem de ter pelo menos um bloco',
-            disabled: s.blocos.length <= 1,
-            onClick: () => mudarSeccao(i, { blocos: s.blocos.filter((_, j) => j !== k) }),
+            title: blocos.length > 1 ? 'Apagar bloco' : 'Cada idioma tem de ter pelo menos um bloco',
+            disabled: blocos.length <= 1,
+            onClick: () => mudarSeccao(i, { contents: blocos.filter((_, j) => j !== k) }),
             // Alinha com as caixas, por baixo das etiquetas.
-            style: { ...botao(s.blocos.length > 1), marginTop: 20 },
+            style: { ...botao(blocos.length > 1), marginTop: 20 },
           },
           '✕',
         ),
@@ -208,11 +193,12 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
     }
 
     const seccao = (s: Seccao, i: number) => {
-      const livre = tipoLivre(s)
+      const blocos = Array.isArray(s?.contents) ? s.contents : []
+      const livre = tipos.find((t) => !blocos.some((b) => b?.type === t.value))
       return h(
         'div',
         {
-          key: s.language || `sem-idioma-${i}`,
+          key: i,
           style: {
             display: 'flex',
             flexDirection: 'column',
@@ -224,7 +210,7 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
             boxShadow: '0 1px 3px rgba(17, 24, 39, 0.06)',
           },
         },
-        // Cabeçalho: número da secção e botão de apagar (apaga todos os blocos deste idioma).
+        // Cabeçalho: número da secção e botão de apagar (apaga o idioma e os seus blocos).
         h(
           'div',
           { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
@@ -235,7 +221,7 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
               type: 'button',
               title: seccoes.length > 1 ? 'Apagar este idioma e os seus blocos' : 'Tem de haver pelo menos um idioma',
               disabled: seccoes.length <= 1,
-              onClick: () => gravar(seccoes.filter((_, j) => j !== i)),
+              onClick: () => input.onChange(seccoes.filter((_, j) => j !== i)),
               style: botao(seccoes.length > 1),
             },
             '✕ Apagar idioma',
@@ -247,11 +233,15 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
           etiqueta('Idioma'),
           h(
             'select',
-            { value: s.language, onChange: (e: any) => mudarSeccao(i, { language: e.target.value }), style: { ...caixa, width: '100%' } },
-            !s.language && h('option', { value: '' }, 'Escolhe o idioma'),
+            {
+              value: s?.language ?? '',
+              onChange: (e: any) => mudarSeccao(i, { language: e.target.value }),
+              style: { ...caixa, width: '100%' },
+            },
+            !s?.language && h('option', { value: '' }, 'Escolhe o idioma'),
             // Um idioma que já tem secção aparece desativado.
             ...idiomas.map((l) =>
-              h('option', { key: l.value, value: l.value, disabled: l.value !== s.language && usados.includes(l.value) }, l.label),
+              h('option', { key: l.value, value: l.value, disabled: l.value !== s?.language && usados.includes(l.value) }, l.label),
             ),
           ),
         ),
@@ -274,20 +264,20 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
                 background: '#f9fafb',
               },
             },
-            ...s.blocos.map(linha(s, i)),
+            ...blocos.map(linha(i, blocos)),
             h(
               'button',
               {
                 type: 'button',
                 disabled: !livre,
-                onClick: () => livre && mudarSeccao(i, { blocos: [...s.blocos, { type: livre.value, content: '' }] }),
+                onClick: () => livre && mudarSeccao(i, { contents: [...blocos, { type: livre.value, content: '' }] }),
                 title: livre ? '' : 'Este idioma já tem blocos de todos os tipos',
                 style: { ...botao(!!livre), alignSelf: 'flex-start' },
               },
               '+ Acrescentar bloco',
             ),
           ),
-          h('div', { style: { flex: '1 1 300px', minWidth: 0 } }, cartao(s.blocos, tipos)),
+          h('div', { style: { flex: '1 1 300px', minWidth: 0 } }, cartao(blocos, tipos)),
         ),
       )
     }
@@ -302,7 +292,8 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[]) =>
           type: 'button',
           disabled: !idiomaLivre,
           // Secção nova: o primeiro idioma sem secção, com um bloco do primeiro tipo.
-          onClick: () => idiomaLivre && gravar([...seccoes, { language: idiomaLivre.value, blocos: [{ type: tipos[0].value, content: '' }] }]),
+          onClick: () =>
+            idiomaLivre && input.onChange([...seccoes, { language: idiomaLivre.value, contents: [{ type: tipos[0].value, content: '' }] }]),
           title: idiomaLivre ? '' : 'Já existem secções para todos os idiomas',
           style: { ...botao(!!idiomaLivre), width: '100%', padding: '10px 12px', borderStyle: 'dashed' },
         },

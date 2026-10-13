@@ -2,11 +2,15 @@
   "items": [
     {
       "name": "AAA",
-      "contents": [
+      "contentBlock": [
         {
           "language": "default",
-          "type": "text",
-          "content": "3232"
+          "contents": [
+            {
+              "type": "text",
+              "content": "3232"
+            }
+          ]
         }
       ]
     }

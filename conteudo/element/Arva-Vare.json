@@ -2,31 +2,37 @@
   "items": [
     {
       "name": "Parque das Árvores",
-      "contents": [
+      "contentBlock": [
         {
           "language": "default",
-          "type": "text",
-          "content": "A farmhouse and landscape project shaped by its wooded site — defined by thermowood cladding and a kinetic façade."
-        },
-        {
-          "language": "default",
-          "type": "title",
-          "content": "Parque das Árvores, Portugal"
-        },
-        {
-          "language": "default",
-          "type": "eyebrow",
-          "content": "architecture . concluded 2019"
+          "contents": [
+            {
+              "type": "text",
+              "content": "A farmhouse and landscape project shaped by its wooded site — defined by thermowood cladding and a kinetic façade."
+            },
+            {
+              "type": "title",
+              "content": "Parque das Árvores, Portugal"
+            },
+            {
+              "type": "eyebrow",
+              "content": "architecture . concluded 2019"
+            }
+          ]
         }
       ]
     },
     {
       "name": "Herdade Aluz Azul",
-      "contents": [
+      "contentBlock": [
         {
           "language": "default",
-          "type": "text",
-          "content": "A family house on Portugal's coastline — an ode to memory and tradition."
+          "contents": [
+            {
+              "type": "text",
+              "content": "A family house on Portugal's coastline — an ode to memory and tradition."
+            }
+          ]
         }
       ]
     }

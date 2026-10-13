@@ -2,26 +2,38 @@
   "items": [
     {
       "name": "titulo",
-      "contents": [
+      "contentBlock": [
         {
           "language": "pt",
-          "type": "text",
-          "content": "Bem-vindo"
+          "contents": [
+            {
+              "type": "text",
+              "content": "Bem-vindo"
+            }
+          ]
         },
         {
           "language": "en",
-          "type": "text",
-          "content": "Welcome"
+          "contents": [
+            {
+              "type": "text",
+              "content": "Welcome"
+            }
+          ]
         }
       ]
     },
     {
       "name": "paragrafo",
-      "contents": [
+      "contentBlock": [
         {
           "language": "default",
-          "type": "text",
-          "content": "Este é um exemplo de conteúdo."
+          "contents": [
+            {
+              "type": "text",
+              "content": "Este é um exemplo de conteúdo."
+            }
+          ]
         }
       ]
     }
