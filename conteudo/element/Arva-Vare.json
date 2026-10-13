@@ -43,6 +43,24 @@
           ]
         }
       ]
+    },
+    {
+      "name": "AEVO PORT",
+      "contentBlock": [
+        {
+          "language": "default",
+          "contents": [
+            {
+              "type": "title",
+              "content": "AEVO PORT"
+            },
+            {
+              "type": "text",
+              "content": "A solid-wood carport and shading structure, built with the same material honesty as our architecture."
+            }
+          ]
+        }
+      ]
     }
   ]
 }
