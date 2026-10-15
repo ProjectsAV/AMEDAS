@@ -112,6 +112,10 @@
         {
           "name": "Graphite",
           "color": "rgba(74, 73, 71, 1)"
+        },
+        {
+          "name": "Terra Cotta",
+          "color": "rgba(164, 93, 68, 1)"
         }
       ]
     }
