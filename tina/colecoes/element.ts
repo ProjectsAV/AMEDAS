@@ -3,7 +3,7 @@ import { descricao, nomeFicheiro } from '../campos'
 import { blocos } from '../componentes/blocos'
 
 // Idiomas de um elemento. "default" = sem idioma específico (serve para todos).
-const IDIOMAS = [
+export const IDIOMAS = [
   { value: 'default', label: 'Predefinido (todos os idiomas)' },
   { value: 'en', label: 'Inglês (en)' },
   { value: 'pt', label: 'Português (pt)' },
@@ -20,7 +20,7 @@ const IDIOMAS = [
 
 // Tipos de bloco. Cada tipo só pode aparecer uma vez por idioma, por isso o máximo de blocos por idioma é o número de tipos.
 // O scripts/gerar.mjs tem a mesma lista em TIPOS_BLOCO: têm de ficar iguais.
-const TIPOS = [
+export const TIPOS = [
   { value: 'title', label: 'Título (title)' },
   { value: 'text', label: 'Texto (text)' },
   { value: 'eyebrow', label: 'Antetítulo (eyebrow)' },

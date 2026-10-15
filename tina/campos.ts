@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import type { TinaField } from 'tinacms'
-import { CorRgba, parseRgba } from './componentes/corRgba'
+import { CorHerdavel, CorRgba, parseRgba } from './componentes/corRgba'
 
 // Funções partilhadas pelas coleções, para não repetir os mesmos campos.
 
@@ -60,6 +60,8 @@ export const nomeUnico = (lista: string, repetido: string): TinaField => ({
   },
 })
 
+const FORMATO_RGBA = 'Formato: rgba(vermelho, verde, azul, opacidade), ex.: rgba(37, 99, 235, 1)'
+
 /** Cor em rgba (com transparência): seletor + opacidade + caixa de texto. */
 export const rgba = (name: string, label: string): TinaField => ({
   name,
@@ -68,18 +70,40 @@ export const rgba = (name: string, label: string): TinaField => ({
   required: true,
   ui: {
     component: CorRgba,
-    validate: (value?: string) =>
-      parseRgba(value) ? undefined : 'Formato: rgba(vermelho, verde, azul, opacidade), ex.: rgba(37, 99, 235, 1)',
+    validate: (value?: string) => (parseRgba(value) ? undefined : FORMATO_RGBA),
   },
 })
 
-/** Par de cores para o tema claro e o tema escuro (abre num submenu). */
+/**
+ * Metade (light ou dark) de um par de claroEscuro. Vazia = herdada do primeiro item da lista (a base),
+ * que tem de ter todas. As duas metades herdam-se juntas: não pode haver só uma preenchida.
+ * O caminho do campo dá a posição: "configurations.1.h1.light" → item 1, par "h1".
+ */
+const corHerdavel = (name: 'light' | 'dark', label: string): TinaField => ({
+  name,
+  label,
+  type: 'string',
+  ui: {
+    component: CorHerdavel,
+    validate: (value?: string, todos?: any, meta?: { name?: string }) => {
+      const caminho = meta?.name?.split('.') ?? []
+      if (value) return parseRgba(value) ? undefined : FORMATO_RGBA
+      if (caminho.at(-3) === '0') return 'Obrigatória na configuração base (a primeira da lista)'
+      const outra = [...caminho.slice(0, -1), name === 'light' ? 'dark' : 'light'].reduce((o: any, k) => o?.[k], todos)
+      return outra ? 'Preenche as duas versões, ou deixa as duas vazias para herdar' : undefined
+    },
+  },
+})
+
+/**
+ * Par de cores para o tema claro e o tema escuro (abre num submenu), dentro de um item de uma lista.
+ * No primeiro item (a base) é obrigatório; nos outros pode ficar vazio para herdar o da base.
+ */
 export const claroEscuro = (name: string, label: string): TinaField => ({
   name,
   label,
   type: 'object',
-  required: true,
-  fields: [rgba('light', 'Tema claro'), rgba('dark', 'Tema escuro')],
+  fields: [corHerdavel('light', 'Tema claro'), corHerdavel('dark', 'Tema escuro')],
 })
 
 /** Tamanho do texto e espaçamentos, comuns a todos os botões. */

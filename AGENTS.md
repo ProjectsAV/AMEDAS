@@ -23,7 +23,7 @@ https://<owner>.github.io/AMEDAS/                        (página inicial)
 https://<owner>.github.io/AMEDAS/<coleção>/<coleção>.css
    │  <link rel="stylesheet">
    ▼
-libs React (outros repositórios): var(--color--default--primary), var(--main-btn-radius)…
+libs React (outros repositórios): var(--color--primary), var(--main-btn-radius)…  (marca: data-config="…")
 ```
 
 - **Em produção:** o painel publicado grava através do **TinaCloud**, que faz commit no GitHub. Esse commit dispara `.github/workflows/pages.yml`, que corre `npm run build` (o build do Tina mais o `gerar.mjs`) e publica a pasta `public/`.
@@ -33,11 +33,12 @@ libs React (outros repositórios): var(--color--default--primary), var(--main-bt
 
 | Caminho | Papel |
 |---|---|
-| `tina/config.ts` | Entrada do Tina: lista de coleções, `basePath`, media e credenciais (vindas do ambiente). |
+| `tina/config.ts` | Entrada do Tina: lista de coleções, `basePath`, media, credenciais (vindas do ambiente) e o `cmsCallback`, que regista as páginas do guia. |
 | `tina/colecoes/*.ts` | Uma coleção por ficheiro. Definem a pasta, o formato, as permissões (`allowedActions`) e os templates ou campos. |
 | `tina/templates/*.ts` | Templates: os "tipos de documento" dentro de uma coleção. Cada JSON indica o seu em `_template`. |
 | `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`, `nomeUnico`, `nomeFicheiro`. Os campos novos devem usar estas funções. |
-| `tina/componentes/corRgba.ts` | Componente React próprio para cores rgba (ver [Cores](#cores-e-tema-escuro)). |
+| `tina/componentes/corRgba.ts` | Componentes React próprios para cores rgba: `CorRgba` e `CorHerdavel`, para as cores que se podem herdar da base (ver [Cores](#cores-e-tema-escuro)). |
+| `tina/guia.ts` | Páginas do guia no menu do painel (ver [Guia no painel](#guia-no-painel)). |
 | `tina/componentes/blocos.ts` | Componente React próprio para o `contentBlock` dos Elementos: uma secção por idioma, com o idioma em cima, os blocos (tipo e conteúdo) à esquerda e um cartão de pré-visualização à direita (ver [Elementos](#elementos-e-idiomas)). |
 | `tina/tina-lock.json` | Schema compilado. É **gerado** pelo `tinacms dev` (o `build:local` não o atualiza), mas **tem de ir para o git**, porque o TinaCloud lê o schema a partir dele. |
 | `tina/__generated__/` | Cliente e tipos gerados. Ignorado no git; nunca se edita à mão. |
@@ -61,18 +62,25 @@ A **fonte de verdade da forma de cada JSON** são os templates e as coleções e
 ### Cores e tema escuro
 
 - **Todas as cores são strings `rgba(r, g, b, a)`.** O seletor de cor do Tina (`ui.component: 'color'`) grava sempre `a: 1` e não tem controlo de opacidade. Por isso os campos de cor usam `rgba()` de `tina/campos.ts`, com o componente `CorRgba`: pré-visualização com fundo aos quadrados, seletor, opacidade e caixa de texto, validados pela regex de `parseRgba`. Mantém este componente em todas as cores novas.
-- **Configurações:** o `colors.json` continua a ser um ficheiro fixo, mas guarda uma lista `configurations[]` que quem edita pode aumentar ou reduzir à vontade. Cada configuração tem `name` e um conjunto completo de cores:
+- **Configurações:** o `colors.json` continua a ser um ficheiro fixo, mas guarda uma lista `configurations[]` (uma por marca ou produto) que quem edita pode aumentar ou reduzir à vontade:
   ```json
   { "configurations": [ { "name": "Default", "background": { "light": "…", "dark": "…" }, "h1": { … }, "custom": [ … ] } ], "_template": "colors" }
   ```
-  - As cores de cada configuração (`background`, `text`, `h1`…`h5`, `primary`, `secondary`, `tertiary`, `separator`) estão na constante `PARES`, que existe em `tina/templates/colors.ts` (com as etiquetas) e em `scripts/gerar.mjs`. **Têm de ficar iguais.**
-  - O `name` é obrigatório e único entre todas as configurações (`nomeUnico`, comparado pelo slug).
-  - Uma configuração nova criada com **+** começa com todas as cores preenchidas (`defaultItem`: `novaConfiguracao` no `colors.ts`). Ao acrescentar uma cor a `PARES`, acrescenta-a também aí e a todas as configurações do `colors.json`.
-  - A configuração que já existia antes desta mudança chama-se `Default`.
-- **`claroEscuro(name, label)`** grava `{ "light": "rgba(…)", "dark": "rgba(…)" }`.
-- **No CSS**, com `p = --color--<slug(configuração)>--`, cada par gera:
-  - `<p><k>-light` e `<p><k>-dark`, com os valores (ex.: `--color--default--h1-light`);
-  - `<p><k>` (ex.: `--color--default--h1`), a variável que as libs devem usar. Aponta para a versão clara no `:root` e para a escura em `@media (prefers-color-scheme: dark)` (exceto com `data-theme="light"`) e em `:root[data-theme="dark"]`.
+  - As cores de cada configuração (`background`, `text`, `h1`…`h5`, `primary`, `secondary`, `tertiary`, `separator`) estão na constante `PARES`, que existe em `tina/templates/colors.ts` (com as etiquetas, exportada para o guia) e em `scripts/gerar.mjs`. **Têm de ficar iguais.** Ao acrescentar uma cor a `PARES`, acrescenta-a também à base no `colors.json`.
+  - O `name` é obrigatório e único entre todas as configurações (`nomeUnico`, comparado pelo slug). O slug dá o prefixo das variáveis e o valor de `data-config`, por isso mudar o nome obriga as apps a mudar também.
+- **Base e herança:** a **primeira configuração da lista é a base** (hoje, `Default`). Tem todas as cores e aplica-se por omissão.
+  - Nas outras, uma cor (par claro/escuro) pode ficar vazia: **herda a da base**. O par herda-se inteiro: ou as duas metades estão preenchidas, ou nenhuma. No JSON, uma cor herdada vem sem a chave ou com `""` nas duas metades.
+  - Uma configuração nova criada com **+** começa sem cores, com tudo herdado (`defaultItem`: `novaConfiguracao` no `colors.ts`).
+  - As cores personalizadas **não** se herdam.
+  - Os valores da Arva Vare foram mantidos todos, mesmo os iguais aos da base. Quem edita é que decide quais passam a herdados.
+- **No painel:** `claroEscuro(name, label)` (em `campos.ts`) cria os pares com o componente `CorHerdavel` (em `corRgba.ts`).
+  - Numa configuração que não é a base, uma cor vazia mostra "Herdada de …" com a cor da base, e o botão **✎ Definir cor própria** copia-a. Uma cor definida tem o botão **↺ Herdar de …**, que apaga as duas metades. Enquanto a caixa de texto tem o foco, o editor fica visível mesmo vazio.
+  - Validação: o `validate` de cada metade exige-a na base (caminho `configurations.0.…`) e bloqueia um par só com uma metade. O `baseCompleta` (no `validate` da lista `configurations`) apanha uma base incompleta mesmo que os submenus nunca tenham sido abertos, por exemplo depois de apagar ou mover a primeira configuração.
+- **No CSS** (`tokens.css`), com `p = --color--<slug(configuração)>--`:
+  - cada par gera `<p><k>-light` e `<p><k>-dark` com os valores (ex.: `--color--default--h1-light`). Numa cor herdada, os valores são `var(<base><k>-light)` e `var(<base><k>-dark)`, por isso todas as variáveis têm sempre valor;
+  - e gera `<p><k>` (ex.: `--color--default--h1`), que aponta para a versão clara no `:root` e para a escura em `@media (prefers-color-scheme: dark)` (exceto com `data-theme="light"`) e em `:root[data-theme="dark"]`;
+  - **nomes neutros:** no fim do CSS, cada configuração tem uma regra `[data-config="<slug>"] { --color--<k>: var(<p><k>); … }` (e `--color--custom-<nome>` para as suas personalizadas). A regra da base tem também o seletor `:root`. **As libs usam os nomes neutros** (`var(--color--primary)`), e a app escolhe a configuração com `data-config` num contentor. Vale o contentor mais próximo. As variáveis com prefixo continuam disponíveis para fixar uma marca específica.
+  - A herança resolve-se nas variáveis com prefixo, nunca omitindo a regra neutra. Se a regra neutra de uma configuração omitisse uma cor, essa cor viria do `data-config` do elemento pai, e não da base.
 - **As cores personalizadas** (`custom[]`, uma lista dentro de cada configuração) geram `<p>custom-<slug(name)>` (ex.: `--color--default--custom-blood`), uma só cor, sem versão escura. O nome só tem de ser único dentro da sua configuração. O campo `description` é só para orientação de quem edita e **não vai para o CSS**.
 - **Os botões não têm cores.** Só têm medidas (tamanhos, espaçamentos, arredondamento, espessuras) e o ícone. As cores vêm sempre dos Tokens.
 
@@ -138,10 +146,16 @@ Os URLs mostrados são absolutos com `BASE_URL` (no CI) e relativos sem ele (em 
 
 **O aspeto imita o painel do Tina:** só tema claro, laranja `#ec4815` / `#c2410c` / `#fff7ed`, os cinzentos do admin, a fonte Inter (Google Fonts) e botões redondos com sombra leve. As cores estão como variáveis no `:root` do `pagina-inicial.mjs`. Foram tiradas do CSS compilado do painel, `public/admin/assets/*.css` (classes `bg-tina-orange*` e `*-gray-*`); se uma atualização do `tinacms` mudar a paleta, vai lá buscar os valores novos. A página não usa o logótipo do Tina: o quadrado laranja com "A" é próprio.
 
+### Guia no painel
+
+O `tina/guia.ts` acrescenta ao menu do painel, na secção *Site*, as páginas **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões** e **Elementos**, para quem usa o que o AMEDAS publica. São *screen plugins* do Tina, registados no `cmsCallback` do `tina/config.ts`, e o URL é `#/screens/<slugify do nome>` (o Tina tira acentos e símbolos: `guia_cores`, `guia_botes`).
+- **Ao vivo:** as listas de variáveis e de ficheiros leem o que está publicado (`tokens.css`, `button.css`, `element/index.json`), primeiro ao lado do painel (`../`) e, se falhar, no Pages. Na porta 4001 do `tinacms dev` usam o Pages; na 3000 usam o `public/` local. A página das Cores aplica o `tokens.css` enquanto está aberta, para as amostras e o exemplo com `data-config`.
+- **Escrito à mão:** os textos e os exemplos de código (nomes de variáveis, forma do JSON, URLs). **Ao mudar nomes de variáveis, a forma de um JSON ou o que é publicado, atualiza também o `guia.ts`.** As etiquetas vêm de `PARES`, `IDIOMAS` e `TIPOS`.
+
 ### Convenções de nomes
 
 - **Chaves JSON e nomes de campos em inglês** (`fontSize`, `borderWidth`); **etiquetas e descrições do painel em português de Portugal**.
-- **Variáveis CSS:** `--color--<configuração>--*` e `--font-size-*` para os tokens, e `--main-btn-*`, `--secondary-btn-*`, `--nav-btn-*` para os botões. Os números saem em `px`.
+- **Variáveis CSS:** `--color--*` (nomes neutros, os que as libs usam), `--color--<configuração>--*` e `--font-size-*` para os tokens, e `--main-btn-*`, `--secondary-btn-*`, `--nav-btn-*` para os botões. Os números saem em `px`.
 - **Comentários no código** em português, curtos, explicando o porquê.
 
 ## Comandos
@@ -200,7 +214,10 @@ O painel pode ser conduzido com Chromium headless e o protocolo CDP: o `Runtime.
 
 Detalhes:
 - em modo local aparece um modal; carrega primeiro em `[data-test="enter-edit-mode"]`;
-- o Chromium do snap só escreve dentro de `~/snap/chromium/common/`;
+- o Chromium do snap só lê e escreve dentro de `~/snap/chromium/common/`;
+- sem `Emulation.setFocusEmulationEnabled`, o `focus()` não dispara eventos de foco no modo headless;
+- o painel guarda o estado do formulário (submenus abertos, alterações por gravar) entre navegações por `#`. Para recomeçar do zero, navega primeiro para `about:blank`. O `history.back()` pode voltar a uma página antiga em cache; navega pelos botões do próprio painel;
+- as páginas do guia abrem em `#/screens/<nome>` (ver [Guia no painel](#guia-no-painel));
 - **antes de gravar** pelo painel, faz cópia do JSON e repõe-a no fim, porque os ficheiros em `conteudo/` são dados reais de quem edita.
 
 ## Pontos de falha
@@ -242,8 +259,8 @@ Cada ponto tem: sintoma → causa → o que fazer.
 - **`slug()` duplicado:** existe em `tina/campos.ts` (validação de nomes repetidos e etiquetas) e em `scripts/gerar.mjs` (nomes das variáveis). **Têm de ficar iguais**, senão o painel mostra uma variável e o CSS gera outra.
 - **Nomes repetidos** (`configurations[]` e o `custom[]` de cada uma, nas cores, e `customSizes[]` no texto): o `nomeUnico(lista, mensagem)` bloqueia a gravação com nomes que dão o mesmo slug.
   - Os irmãos encontram-se pelo caminho do campo que o Tina passa ao `validate` (`meta.name`, ex.: `configurations.0.custom.2.name` → `configurations.0.custom`). É isso que faz funcionar a validação em listas dentro de listas. O argumento `lista` só se usa se faltar o caminho.
-  - O gerador volta a verificar (configurações repetidas ou sem nome, cores repetidas numa configuração, cor de `PARES` em falta) e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
-- **Sem versão escura:** as cores personalizadas não têm versão escura.
+  - O gerador volta a verificar (nenhuma configuração, configurações repetidas ou sem nome, cores repetidas numa configuração, cor de `PARES` em falta na base, par só com uma metade) e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
+- **Sem versão escura nem herança:** as cores personalizadas não têm versão escura nem se herdam da base. Dentro de um `data-config` cuja configuração não tem uma certa cor personalizada, `var(--color--custom-<nome>)` vem do `data-config` acima (ou do `:root`), ou fica vazia.
 
 ### 8. Permissões só no painel
 O `allowedActions` só esconde botões no painel. Pelo git, ou pela API GraphQL, continua a ser possível criar ou apagar ficheiros nas coleções fixas.
@@ -282,7 +299,7 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 - **`descricao(texto)`:** é um campo só de leitura que não grava valor. Não uses `descricao` como nome de um campo real no mesmo template.
 
 ### 11. Marca do painel removida
-O painel usa o aspeto original da Tina. Houve uma personalização (`tina/marca.ts`, chamada pelo `cmsCallback` no `config.ts`) que injetava CSS sobre classes internas do Tina (`fill-tina-orange`, `bg-tina-orange-dark`). O utilizador retirou-a.
+O painel usa o aspeto original da Tina. Houve uma personalização (`tina/marca.ts`, chamada pelo `cmsCallback` no `config.ts`, que hoje só regista o guia) que injetava CSS sobre classes internas do Tina (`fill-tina-orange`, `bg-tina-orange-dark`). O utilizador retirou-a.
 
 Pede confirmação ao utilizador antes de a voltar a pôr. Se a voltares a pôr, confirma o aspeto depois de cada atualização do `tinacms`, porque as classes internas podem mudar. O ecrã de login do TinaCloud não é personalizável.
 
@@ -294,7 +311,7 @@ Um `import` de um ficheiro que já não existe em `tina/config.ts` faz falhar o 
 - **GitHub Pages:** num repositório privado exige um plano pago, e o site publicado (CSS, JSON, imagens, `/admin`) é **público**. O `/admin` exige login do TinaCloud.
 
 ### 13. Do lado das libs
-O componente Button do projeto irmão `~/Secretária/Button-Tina` ainda lê `--btn-primary-bg`, `--btn-radius`, etc., nomes que este repositório já não gera. As libs têm de passar a ler `--color--<configuração>--*`, `--font-size-*` e `--<tipo>-btn-*`. As antigas `--color-<k>` (sem configuração) também já não existem.
+O componente Button do projeto irmão `~/Secretária/Button-Tina` ainda lê `--btn-primary-bg`, `--btn-radius`, etc., nomes que este repositório já não gera. As libs têm de passar a ler os nomes neutros `--color--*` (a app escolhe a marca com `data-config`), `--font-size-*` e `--<tipo>-btn-*`. As antigas `--color-<k>` (com um só hífen) também já não existem.
 
 Estados como `:hover` e o sublinhado da página ativa não funcionam com estilos inline (`style={{…}}`): precisam de classes CSS na lib.
 
@@ -308,5 +325,5 @@ Estados como `:hover` e o sublinhado da página ativa não funcionam com estilos
 - **O que fazer:** dá ao campo novo um nome distinto (foi por isso que o `text` usa `h1Size` e `customSizes`).
 
 ## Pendente
-1. Decidir o mapeamento das cores e dos tamanhos de texto nas libs, por exemplo, o fundo do botão principal = `--color--default--primary`, e como é que uma lib escolhe a configuração. Não há token para o texto sobre as cores principal, secundária e terciária.
+1. Decidir o mapeamento das cores e dos tamanhos de texto nas libs, por exemplo, o fundo do botão principal = `--color--primary`. A escolha da configuração já está decidida (`data-config`). Não há token para o texto sobre as cores principal, secundária e terciária.
 2. Confirmar em tina.io os limites do plano gratuito (utilizadores, modo editorial).
