@@ -118,7 +118,8 @@
         },
         {
           "name": "Terra Cotta",
-          "color": "rgba(164, 93, 68, 1)"
+          "color": "rgba(164, 93, 68, 1)",
+          "description": "This color is used in section 4 background, plus the small accent bar on the LAGO placeholder note."
         }
       ]
     }
