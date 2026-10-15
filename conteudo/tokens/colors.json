@@ -104,6 +104,10 @@
         {
           "name": "milk",
           "color": "rgba(249, 247, 240, 1)"
+        },
+        {
+          "name": "Light Stone",
+          "color": "rgba(75, 73, 71, 1)"
         }
       ]
     }
