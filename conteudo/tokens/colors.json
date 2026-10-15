@@ -108,11 +108,13 @@
         },
         {
           "name": "Light Stone",
-          "color": "rgba(216, 210, 194, 1)"
+          "color": "rgba(216, 210, 194, 1)",
+          "description": ""
         },
         {
           "name": "Graphite",
-          "color": "rgba(74, 73, 71, 1)"
+          "color": "rgba(74, 73, 71, 1)",
+          "description": "This is the default dark color of Arva Vare Webpage. It is used in text of section 2, 3 and 7. It is also used in background of section 6."
         },
         {
           "name": "Terra Cotta",
