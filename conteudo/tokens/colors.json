@@ -108,6 +108,10 @@
         {
           "name": "Light Stone",
           "color": "rgba(75, 73, 71, 1)"
+        },
+        {
+          "name": "Graphite",
+          "color": "rgba(74, 73, 71, 1)"
         }
       ]
     }
