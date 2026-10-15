@@ -103,7 +103,8 @@
       "custom": [
         {
           "name": "Milk",
-          "color": "rgba(249, 247, 240, 1)"
+          "color": "rgba(249, 247, 240, 1)",
+          "description": "This is the default light color of Arva Vare Webpage. It is used in text of section 1, 4 and 5. It is also used in background of section 3 and 7."
         },
         {
           "name": "Light Stone",
