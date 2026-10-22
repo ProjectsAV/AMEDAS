@@ -174,8 +174,27 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
 // com um index.json que lista os ficheiros (o Pages não deixa listar pastas).
 const soJson = ['element']
 
-// Tipos de bloco dos Elementos. Têm de ficar iguais a TIPOS em tina/colecoes/element.ts.
-const TIPOS_BLOCO = ['title', 'text', 'eyebrow']
+// Tipos de bloco dos Elementos. Têm de ficar iguais a TIPOS, REPETIVEIS e GRUPO em tina/colecoes/element.ts.
+const TIPOS_BLOCO = ['title', 'text', 'eyebrow', 'subtitle', 'item', 'quote']
+const REPETIVEIS = ['item']
+const GRUPO = 'group'
+
+// Blocos de um idioma (comGrupos) ou de um grupo: pelo menos um, tipos conhecidos, sem repetir os não repetíveis;
+// os grupos ({ type: GRUPO, contents[] }) só no primeiro nível e verificados da mesma forma.
+const verificarBlocos = (blocos, aqui, comGrupos) => {
+  if (!blocos.length) throw new Error(`${aqui} não tem blocos`)
+  const vistos = new Set()
+  for (const b of blocos) {
+    if (b.type === GRUPO && comGrupos) {
+      verificarBlocos(b.contents ?? [], `${aqui} (grupo)`, false)
+      continue
+    }
+    if (!TIPOS_BLOCO.includes(b.type)) throw new Error(`${aqui} tem um bloco com tipo inválido: "${b.type ?? ''}"`)
+    if (REPETIVEIS.includes(b.type)) continue
+    if (vistos.has(b.type)) throw new Error(`${aqui} tem o tipo "${b.type}" repetido`)
+    vistos.add(b.type)
+  }
+}
 
 // Verificações das coleções sem CSS (o painel já as faz; isto apanha JSON editado fora dele).
 const verificar = {
@@ -195,12 +214,7 @@ const verificar = {
         if (!c.language) throw new Error(`${onde} tem um conteúdo sem idioma`)
         if (idiomas.has(c.language)) throw new Error(`${onde} tem o idioma "${c.language}" repetido`)
         idiomas.add(c.language)
-        const tipos = (c.contents ?? []).map((b) => b.type)
-        if (!tipos.length) throw new Error(`${onde} [${c.language}] não tem blocos`)
-        const errado = tipos.find((t) => !TIPOS_BLOCO.includes(t))
-        if (tipos.includes(errado)) throw new Error(`${onde} [${c.language}] tem um bloco com tipo inválido: "${errado ?? ''}"`)
-        const repetido = tipos.find((t, i) => tipos.indexOf(t) !== i)
-        if (repetido) throw new Error(`${onde} [${c.language}] tem o tipo "${repetido}" repetido`)
+        verificarBlocos(c.contents ?? [], `${onde} [${c.language}]`, true)
       }
     }
   },

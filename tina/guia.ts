@@ -1,5 +1,5 @@
 import { createElement as h, Fragment, useEffect, useState, type ReactNode } from 'react'
-import { IDIOMAS, TIPOS } from './colecoes/element'
+import { GRUPO, IDIOMAS, TIPOS } from './colecoes/element'
 import { PARES } from './templates/colors'
 
 // Guia para quem usa o que o AMEDAS publica: páginas próprias no menu do painel (secção "Site"),
@@ -482,7 +482,7 @@ const Elementos = () => {
   } catch {}
   return pagina(
     'Elementos',
-    'Os Elementos são textos curtos (títulos, antetítulos e parágrafos) em vários idiomas. Cada ficheiro do painel é publicado como JSON em `element/<ficheiro>.json`.',
+    'Os Elementos são textos curtos (títulos, subtítulos, antetítulos, parágrafos, citações e listas) em vários idiomas. Cada ficheiro do painel é publicado como JSON em `element/<ficheiro>.json`.',
     seccao(
       'Ficheiros publicados',
       origem(lido, 'element/index.json'),
@@ -492,13 +492,18 @@ const Elementos = () => {
     seccao(
       'Forma do JSON',
       codigo(`
-type Content = { type: 'title' | 'text' | 'eyebrow'; content?: string }
+type TextContent = { type: 'title' | 'text' | 'eyebrow' | 'subtitle' | 'item' | 'quote'; content?: string }
+type GroupContent = { type: 'group'; content?: string; contents: TextContent[] }
+type Content = TextContent | GroupContent
 type ContentBlock = { language: string; contents: Content[] }
 type TextElement = { name: string; contentBlock: ContentBlock[] }
 type Ficheiro = { items?: TextElement[] }`),
       lista([
         'Cada item é um texto em todos os idiomas, e procura-se pelo `name` (único no ficheiro).',
-        'Cada `contentBlock` é a versão num idioma, com 1 a 3 blocos, um de cada tipo.',
+        'Cada `contentBlock` é a versão num idioma, com pelo menos um bloco.',
+        'O `item` (item de lista) pode repetir-se, e a ordem dos itens é a da lista. Os outros tipos de texto aparecem no máximo uma vez em cada idioma e uma vez em cada grupo.',
+        'Um bloco `group` junta blocos relacionados (ex.: uma pergunta e a sua resposta) no seu `contents`. Pode haver vários grupos, mas um grupo não tem grupos dentro. O `content` de um grupo vem vazio ou não vem.',
+        'Um `find()` por tipo só olha para o primeiro nível, por isso nunca apanha um bloco de dentro de um grupo. Quem não conhece os grupos nem os tipos novos continua a funcionar.',
         'Um ficheiro sem elementos vem como `{}`: trata a falta de `items` como `[]`.',
         'Um bloco vazio pode vir sem `content`.',
       ]),
@@ -528,9 +533,31 @@ function texto(items, name, idioma) {
 // texto(items, 'titulo', 'pt')  →  { eyebrow: '…', title: '…', text: '…' }`),
     ),
     seccao(
+      'Listas e grupos',
+      p('Os itens de lista e os grupos leem-se a partir dos blocos de um idioma (a `versao` do exemplo acima):'),
+      codigo(`
+// Itens da lista, pela ordem
+const itens = versao.contents.filter((c) => c.type === 'item').map((c) => c.content ?? '')
+
+// Grupos, pela ordem: [{ subtitle: 'Pergunta 1', text: 'Resposta 1', items: [] }, …]
+const grupos = versao.contents
+  .filter((c) => c.type === 'group')
+  .map((g) => {
+    const de = (tipo) => g.contents.find((c) => c.type === tipo)?.content ?? ''
+    return {
+      subtitle: de('subtitle'),
+      text: de('text'),
+      items: g.contents.filter((c) => c.type === 'item').map((c) => c.content ?? ''),
+    }
+  })`),
+    ),
+    seccao(
       'Idiomas e tipos',
       tabela(['Código', 'Idioma'], IDIOMAS.map(({ value, label }) => [`\`${value}\``, label])),
-      tabela(['Tipo', 'No painel'], TIPOS.map(({ value, label }) => [`\`${value}\``, label.replace(/\s*\(.*\)$/, '')])),
+      tabela(
+        ['Tipo', 'No painel'],
+        [...TIPOS, { value: GRUPO, label: 'Grupo' }].map(({ value, label }) => [`\`${value}\``, label.replace(/\s*\(.*\)$/, '')]),
+      ),
     ),
   )
 }
