@@ -1,0 +1,51 @@
+{
+  "items": [
+    {
+      "name": "Foundations",
+      "contentBlock": [
+        {
+          "language": "default",
+          "contents": [
+            {
+              "type": "text",
+              "content": "Information on this page refers to the AEVO VAEA and AEVO VALO structures in their 5×5m and 5×10m configurations, as currently defined. It applies to private clients and to businesses — resorts, boutique hotels, golf courses, estates — that request a feasibility study for a new installation, and is confirmed in that study before any commitment."
+            },
+            {
+              "type": "group",
+              "contents": [
+                {
+                  "type": "item",
+                  "content": "Foundations. Integrated foundations keep ground intrusion to a minimum. The foundation solution is defined for each project after a site survey and structural verification, taking into account ground conditions, wind loading (EN 1991-1-4) and local regulations."
+                },
+                {
+                  "type": "item",
+                  "content": "Solar power. PV modules are integrated within the canopy geometry, with a power bank for EV charging. Capacities shown for each structure are indicative and based on a 440 Wp placeholder module, pending confirmation of the final module specification. Actual production varies with orientation, shading, season and temperature."
+                },
+                {
+                  "type": "item",
+                  "content": "Charging. Configurable for EV and e-bike charging points, subject to a site power study. Availability, charging power and simultaneous sessions depend on the grid connection, installed storage and project configuration, and are confirmed per project. Driving range and charging time depend on the vehicle, its state of charge and conditions of use."
+                },
+                {
+                  "type": "item",
+                  "content": "Warranty. Structural and finish warranty — terms to be confirmed. Duration, conditions, maintenance requirements and exclusions will be set out in the project proposal."
+                },
+                {
+                  "type": "item",
+                  "content": "Licensing. Self-consumption installations are registered under Decreto-Lei n.º 15/2022. Urbanistic licensing under the RJUE applies where the structure's scale or siting requires municipal approval, and grid interconnection documentation is prepared for distributor sign-off. Approvals and timelines depend on the competent authorities and cannot be guaranteed."
+                },
+                {
+                  "type": "item",
+                  "content": "Responsibilities. Installation, electrical connection and maintenance must be carried out by qualified professionals. The owner is responsible for using the structure as instructed and for periodic inspection of the structure, modules and electrical installation."
+                },
+                {
+                  "type": "item",
+                  "content": "Illustrations and dimensions. Renders and drawings are illustrative. Dimensions refer to the nominal 5×5m and 5×10m footprints; as-built dimensions and final configurations are confirmed in the feasibility study and may differ from those shown."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
