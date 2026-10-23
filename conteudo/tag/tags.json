@@ -1,3 +1,9 @@
 {
-  "items": []
+  "items": [
+    {
+      "name": "AEVO Port icon",
+      "file": "/uploads/AEVO-Logo.svg",
+      "description": "Icon do produto AEVO Port"
+    }
+  ]
 }
