@@ -1,6 +1,6 @@
 # AMEDAS
 
-**Arva Meta Data Storage**: o sítio onde a equipa guarda as cores, os tamanhos de texto, as medidas dos botões e os textos dos sites da Arva Vare. Edita-se num painel web, sem mexer em código, e o resultado é publicado como CSS e JSON que as apps e as libs leem.
+**Arva Meta Data Storage**: o sítio onde a equipa guarda as cores, os tamanhos de texto, as medidas dos botões, os textos e os ficheiros com link fixo (etiquetas) dos sites da Arva Vare. Edita-se num painel web, sem mexer em código, e o resultado é publicado como CSS e JSON que as apps e as libs leem.
 
 - **Página inicial** (links para tudo o que está publicado): https://projectsav.github.io/AMEDAS/
 - **Painel** (exige login do TinaCloud): https://projectsav.github.io/AMEDAS/admin/
@@ -11,7 +11,7 @@
 2. O commit dispara o GitHub Actions (`.github/workflows/pages.yml`), que corre `npm run build`. O script `scripts/gerar.mjs` converte os JSON de `conteudo/` em CSS e verifica-os.
 3. O resultado é publicado no GitHub Pages, em menos de dois minutos.
 
-O painel tem um guia (secção *Site* do menu: **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões** e **Elementos**) com os nomes das variáveis e exemplos de código, sempre atualizado com o que está publicado.
+O painel tem um guia (secção *Site* do menu: **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões**, **Elementos** e **Etiquetas**) com os nomes das variáveis e exemplos de código, sempre atualizado com o que está publicado.
 
 ## O que é publicado
 
@@ -20,6 +20,8 @@ O painel tem um guia (secção *Site* do menu: **Guia: Começar**, **Cores**, **
 | Tokens | `tokens/tokens.css` | Cores (claro e escuro, por marca) e tamanhos de texto |
 | Botões | `button/button.css` | Medidas dos botões principal, secundário e de navegação |
 | Elementos | `element/<ficheiro>.json` e `element/index.json` | Textos em vários idiomas |
+| Etiquetas | `tag/<etiqueta>.<extensão>` e `tag/index.json` | Ficheiros do Media Manager com um link que não muda |
+| (Media Manager) | `uploads/<ficheiro>` | Todos os ficheiros carregados, com ou sem etiqueta |
 
 Os JSON de cada coleção também são publicados ao lado do CSS.
 
@@ -65,6 +67,18 @@ Cada ficheiro de Elementos é uma lista de textos, cada um com um nome e uma ver
 - **Grupos:** um bloco `group` junta blocos relacionados no seu `contents` (ex.: uma pergunta e a resposta, um cartão). Pode haver vários grupos, mas não há grupos dentro de grupos.
 
 Em TypeScript, o mais simples é usar o cliente [`@arva/seara`](https://github.com/ProjectsAV/Seara) (privado), que já tem os tipos.
+
+### Ficheiros com link fixo (Etiquetas)
+
+Uma etiqueta é um nome que aponta para um ficheiro do Media Manager. O ficheiro é publicado em `tag/<etiqueta>.<extensão>`, e o link não muda quando se escolhe outro ficheiro para a etiqueta. Por exemplo, com vários favicons carregados, a etiqueta "Favicon" escolhe qual está em uso:
+
+```html
+<link rel="icon" href="https://projectsav.github.io/AMEDAS/tag/favicon.png">
+```
+
+- O nome no link é o da etiqueta em minúsculas, sem acentos e com `-` no lugar dos espaços. A extensão é a do ficheiro escolhido: se mudar (ex.: de `.png` para `.svg`), o link muda.
+- O número de etiquetas é livre (pode não haver nenhuma), e os ficheiros sem etiqueta continuam em `uploads/<ficheiro>`.
+- As etiquetas editam-se na coleção **Etiquetas** do painel, porque o Media Manager do Tina não se pode estender.
 
 ## Desenvolvimento
 

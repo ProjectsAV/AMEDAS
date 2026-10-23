@@ -1,5 +1,5 @@
-import { readdir, readFile, writeFile, mkdir, copyFile, rm } from 'node:fs/promises'
-import { join } from 'node:path'
+import { readdir, readFile, writeFile, mkdir, copyFile, rm, stat } from 'node:fs/promises'
+import { extname, join, resolve, sep } from 'node:path'
 import { paginaInicial } from './pagina-inicial.mjs'
 
 // URL público do Pages, ex.: https://<owner>.github.io/AMEDAS
@@ -241,6 +241,47 @@ for (const colecao of soJson) {
     ],
   })
   console.log(`${dir}/ → ${out}/ (${ficheiros.length} ficheiros + index.json)`)
+}
+
+// Etiquetas (conteudo/tag/tags.json): cada uma copia o ficheiro escolhido no Media Manager para um link fixo,
+// tag/<slug(nome)>.<extensão>, e o index.json lista-as. Trocar o ficheiro de uma etiqueta não muda o link
+// (só se a extensão mudar). Começa do zero, para as etiquetas apagadas desaparecerem.
+{
+  const out = join('public', 'tag')
+  const uploads = resolve('public', 'uploads')
+  await rm(out, { recursive: true, force: true })
+  await mkdir(out, { recursive: true })
+
+  const dados = JSON.parse(await readFile(join('conteudo', 'tag', 'tags.json'), 'utf8').catch(() => '{}'))
+  const etiquetas = []
+  const nomes = new Set()
+  for (const { name, file } of dados.items ?? []) {
+    const s = slug(name ?? '')
+    if (!s) throw new Error(`Etiquetas: há uma etiqueta sem nome: "${name ?? ''}"`)
+    if (nomes.has(s)) throw new Error(`Etiquetas: nome repetido "${name}" (${s})`)
+    nomes.add(s)
+    if (!file) throw new Error(`Etiqueta "${name}": falta o ficheiro`)
+    // O Tina grava "/uploads/<ficheiro>". O URL do TinaCloud (https://assets.tina.io/<projeto>/<ficheiro>)
+    // só aparece no painel, mas aceita-se também.
+    const relativo = file.replace(/^https:\/\/assets\.tina\.io\/[^/]+\//, '/uploads/')
+    const origem = resolve('public', `.${relativo}`)
+    if (!origem.startsWith(uploads + sep)) throw new Error(`Etiqueta "${name}": o ficheiro "${file}" não está no Media Manager (uploads/)`)
+    const ext = extname(origem).slice(1).toLowerCase()
+    if (!ext) throw new Error(`Etiqueta "${name}": o ficheiro "${file}" não tem extensão`)
+    if (!(await stat(origem).catch(() => null))?.isFile())
+      throw new Error(`Etiqueta "${name}": o ficheiro "${file}" não existe (foi apagado do Media Manager?)`)
+    await copyFile(origem, join(out, `${s}.${ext}`))
+    etiquetas.push({ name, file: `${s}.${ext}`, source: relativo })
+  }
+  await writeFile(join(out, 'index.json'), `${JSON.stringify(etiquetas, null, 2)}\n`)
+  seccoes.push({
+    titulo: rotulo('tag'),
+    links: [
+      { nome: `${rotulo('tag')} · lista de etiquetas`, href: 'tag/index.json' },
+      ...etiquetas.map((e) => ({ nome: `${rotulo('tag')} · ${e.name}`, href: `tag/${e.file}` })),
+    ],
+  })
+  console.log(`conteudo/tag/tags.json → ${out}/ (${etiquetas.length} etiquetas + index.json)`)
 }
 
 await writeFile(join('public', 'index.html'), paginaInicial(seccoes, BASE))

@@ -16,6 +16,7 @@ conteudo/<coleção>/*.json      ← fonte de verdade do conteúdo
    │  node scripts/gerar.mjs
    ▼
 public/<coleção>/<coleção>.css  + cópia dos JSON   (gerado, ignorado no git)
+public/tag/<etiqueta>.<ext>     ← cópia do ficheiro do Media Manager escolhido em cada etiqueta
 public/index.html               ← página inicial com os links de tudo
    │  GitHub Actions → GitHub Pages
    ▼
@@ -36,9 +37,10 @@ libs React (outros repositórios): var(--color--primary), var(--main-btn-radius)
 | `tina/config.ts` | Entrada do Tina: lista de coleções, `basePath`, media, credenciais (vindas do ambiente) e o `cmsCallback`, que regista as páginas do guia. |
 | `tina/colecoes/*.ts` | Uma coleção por ficheiro. Definem a pasta, o formato, as permissões (`allowedActions`) e os templates ou campos. |
 | `tina/templates/*.ts` | Templates: os "tipos de documento" dentro de uma coleção. Cada JSON indica o seu em `_template`. |
-| `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`, `nomeUnico`, `nomeFicheiro`. Os campos novos devem usar estas funções. |
+| `tina/campos.ts` | Funções partilhadas que criam campos: `px`, `rgba`, `claroEscuro`, `tamanhos`, `descricao`, `slug`, `nomeUnico`, `nomeFicheiro`. Os campos novos devem usar estas funções. Tem também a constante `PAGES` (URL do Pages), usada pelo guia e pelo link das etiquetas. |
 | `tina/componentes/corRgba.ts` | Componentes React próprios para cores rgba: `CorRgba` e `CorHerdavel`, para as cores que se podem herdar da base (ver [Cores](#cores-e-tema-escuro)). |
 | `tina/guia.ts` | Páginas do guia no menu do painel (ver [Guia no painel](#guia-no-painel)). |
+| `tina/componentes/linkEtiqueta.ts` | Componente `LinkEtiqueta`, que mostra o link publicado de cada etiqueta, e as funções `extensao` e `nomeDoFicheiro` (ver [Etiquetas](#etiquetas)). |
 | `tina/componentes/blocos.ts` | Componente React próprio para o `contentBlock` dos Elementos: uma secção por idioma, com o idioma em cima, os blocos (tipo e conteúdo) e os grupos de blocos à esquerda e um cartão de pré-visualização à direita (ver [Elementos](#elementos-e-idiomas)). |
 | `README.md` | Apresentação do projeto para pessoas (o que publica, como se usa, comandos). Atualiza-o quando mudar o que é publicado. |
 | `tina/tina-lock.json` | Schema compilado. É **gerado** pelo `tinacms dev` (o `build:local` não o atualiza), mas **tem de ir para o git**, porque o TinaCloud lê o schema a partir dele. |
@@ -47,7 +49,7 @@ libs React (outros repositórios): var(--color--primary), var(--main-btn-radius)
 | `scripts/gerar.mjs` | Converte JSON em CSS e copia os JSON para `public/`. É a única lógica de negócio do repositório. |
 | `scripts/pagina-inicial.mjs` | HTML da página inicial (ver [Página inicial](#página-inicial)). Chamada no fim do `gerar.mjs`. |
 | `public/uploads/` | Imagens carregadas pelo Media Manager. Ficam no git. |
-| `public/admin/`, `public/<coleção>/`, `public/index.html` | Gerados (o painel, o CSS e a página inicial). Ignorados no git. |
+| `public/admin/`, `public/<coleção>/`, `public/index.html` | Gerados (o painel, o CSS, os JSON, as etiquetas e a página inicial). Ignorados no git. |
 | `.github/workflows/pages.yml` | Build e deploy para o GitHub Pages, com Node 24. |
 
 ## Coleções
@@ -57,6 +59,7 @@ libs React (outros repositórios): var(--color--primary), var(--main-btn-radius)
 | `tokens` (Tokens) | `conteudo/tokens/` | Fixos: `colors.json` e `text.json`. Não se pode criar nem apagar (as configurações de cores dentro do `colors.json`, sim) | Templates: `colors`, `text` | `tokens/tokens.css` + JSON |
 | `button` (Botões) | `conteudo/button/` | Fixos: `mainButton.json`, `secondaryButton.json`, `navButton.json` | Templates: `mainButton`, `secondaryButton`, `navButton` | `button/button.css` + JSON |
 | `element` (Elementos) | `conteudo/element/` | **Livres**: criar e apagar permitido, sem pastas. Nome com `A-Z a-z 0-9 - _` | `fields` (sem templates): `items[]` com `{ name, contentBlock[] }`; cada `contentBlock` é `{ language, contents[] }` e cada bloco de `contents` é `{ type, content }` ou um grupo `{ type: 'group', contents[] }` | `element/*.json` + `index.json` (sem CSS) |
+| `tag` (Etiquetas) | `conteudo/tag/` | Fixo: `tags.json`. As etiquetas acrescentam-se e apagam-se dentro dele | `fields` (sem templates): `items[]` com `{ name, file, description? }` | `tag/<slug(name)>.<extensão>` (cópia do ficheiro) + `index.json` |
 
 A **fonte de verdade da forma de cada JSON** são os templates e as coleções em `tina/`. O `gerar.mjs` tem de corresponder a eles; ver [Duas fontes de verdade](#1-duas-fontes-de-verdade-schema-e-gerador).
 
@@ -146,11 +149,28 @@ type TextElement = { name: string; contentBlock: ContentBlock[] }
 - **Valores iniciais (`defaultItem`):** um item novo criado com **+** começa com nome vazio e um `contentBlock` no idioma `default` com um bloco `text` vazio.
 - **Na lista do painel:** cada item aparece com o `name`.
 
+### Etiquetas
+
+Uma etiqueta é um nome fixo que aponta para um ficheiro do Media Manager, para que o link desse nome não mude quando se troca o ficheiro (ex.: vários favicons carregados e uma etiqueta "Favicon" que escolhe o que está em uso). Funciona com qualquer tipo de ficheiro do Media Manager. O número de etiquetas é livre (pode não haver nenhuma) e os ficheiros sem etiqueta continuam publicados só em `uploads/<ficheiro>`.
+
+- **Porque é uma coleção:** o Media Manager do Tina não tem API para acrescentar campos ou ações. As etiquetas vivem na coleção `tag` (`tina/colecoes/tag.ts`) e o campo `file` (`type: 'image'`, sem `accept`) abre o Media Manager para escolher ou carregar o ficheiro. Sem `accept`, o Media Manager mostra todos os tipos de ficheiro.
+- **JSON** (`conteudo/tag/tags.json`, ficheiro fixo):
+  ```json
+  { "items": [ { "name": "Favicon", "file": "/uploads/favicons/natal.png", "description": "…" } ] }
+  ```
+  - `name`: `nomeUnico` (obrigatório e único pelo slug).
+  - `file`: o caminho que o Tina grava, `/uploads/<ficheiro>` (o TinaCloud converte o URL `assets.tina.io` que o painel mostra para este caminho ao gravar). O `validate` exige ficheiro com extensão.
+  - `link`: campo só de leitura (componente `LinkEtiqueta`) que mostra `PAGES/tag/<slug(name)>.<extensão>` com um botão Copiar, atualizado enquanto se escreve (subscreve o formulário). Não é gravado.
+  - `description`: só para quem edita; não é publicada.
+  - Na lista do painel, cada item aparece como `<nome> → <ficheiro>`.
+- **No gerador** (bloco das etiquetas no fim do `gerar.mjs`): apaga e recria `public/tag/`, copia cada ficheiro para `public/tag/<slug(name)>.<extensão em minúsculas>` e escreve `public/tag/index.json`, uma lista `[{ name, file, source }]` (`file` = nome publicado em `tag/`, `source` = caminho em `/uploads/`). Lança erro (e o deploy para) com nome vazio ou repetido, ficheiro em falta, sem extensão, fora de `public/uploads/` ou que não existe.
+- **O link** é `https://projectsav.github.io/AMEDAS/tag/<slug(name)>.<extensão>`. A extensão faz parte do link para o Pages servir o `Content-Type` certo (um ficheiro sem extensão sai como `application/octet-stream`, e os browsers não mostram SVG assim). Por isso, trocar o ficheiro por outro com outra extensão muda o link.
+
 ### Página inicial
 
 O `gerar.mjs` escreve `public/index.html`, a página de `https://projectsav.github.io/AMEDAS/` (sem ela, o Pages dá 404). Tem:
 - **um botão "Abrir o painel"**, que aponta para `admin/`;
-- **uma secção por coleção**, montada a partir do que o gerador publicou nessa corrida. As coleções com CSS listam primeiro o CSS e depois cada JSON; as coleções `soJson` listam o `index.json` e cada ficheiro. Cada linha tem o URL, "Abrir" e "Copiar link".
+- **uma secção por coleção**, montada a partir do que o gerador publicou nessa corrida. As coleções com CSS listam primeiro o CSS e depois cada JSON; as coleções `soJson` listam o `index.json` e cada ficheiro; as Etiquetas listam o `tag/index.json` e cada etiqueta (pelo `name`). Cada linha tem o URL, "Abrir" e "Copiar link".
 
 Os nomes das linhas (ex.: "Tokens · Cores") são as etiquetas do painel (`label` da coleção e do template), lidas do `tina/tina-lock.json`. Se uma etiqueta não estiver no lock, aparece o nome técnico (`tokens`, `colors`). Nos `soJson`, a linha usa o nome do ficheiro.
 
@@ -160,8 +180,8 @@ Os URLs mostrados são absolutos com `BASE_URL` (no CI) e relativos sem ele (em 
 
 ### Guia no painel
 
-O `tina/guia.ts` acrescenta ao menu do painel, na secção *Site*, as páginas **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões** e **Elementos**, para quem usa o que o AMEDAS publica. São *screen plugins* do Tina, registados no `cmsCallback` do `tina/config.ts`, e o URL é `#/screens/<slugify do nome>` (o Tina tira acentos e símbolos: `guia_cores`, `guia_botes`).
-- **Ao vivo:** as listas de variáveis e de ficheiros leem o que está publicado (`tokens.css`, `button.css`, `element/index.json`), primeiro ao lado do painel (`../`) e, se falhar, no Pages. Na porta 4001 do `tinacms dev` usam o Pages; na 3000 usam o `public/` local. A página das Cores aplica o `tokens.css` enquanto está aberta, para as amostras e o exemplo com `data-config`.
+O `tina/guia.ts` acrescenta ao menu do painel, na secção *Site*, as páginas **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões**, **Elementos** e **Etiquetas**, para quem usa o que o AMEDAS publica. São *screen plugins* do Tina, registados no `cmsCallback` do `tina/config.ts`, e o URL é `#/screens/<slugify do nome>` (o Tina tira acentos e símbolos: `guia_cores`, `guia_botes`).
+- **Ao vivo:** as listas de variáveis e de ficheiros leem o que está publicado (`tokens.css`, `button.css`, `element/index.json`, `tag/index.json`), primeiro ao lado do painel (`../`) e, se falhar, no Pages. Na porta 4001 do `tinacms dev` usam o Pages; na 3000 usam o `public/` local. A página das Cores aplica o `tokens.css` enquanto está aberta, para as amostras e o exemplo com `data-config`.
 - **Escrito à mão:** os textos e os exemplos de código (nomes de variáveis, forma do JSON, URLs). **Ao mudar nomes de variáveis, a forma de um JSON ou o que é publicado, atualiza também o `guia.ts`.** As etiquetas vêm de `PARES`, `IDIOMAS` e `TIPOS`.
 
 ### Convenções de nomes
@@ -213,6 +233,7 @@ Cada receita termina com uma verificação. Só está feita quando essa verifica
 3. No `gerar.mjs`, uma de duas:
    - **Com CSS:** acrescenta `colecoes.<nome>`, com um mapa template → função. Uma coleção sem templates não tem `_template`, e o ciclo atual exige-o.
    - **Só JSON:** acrescenta o nome a `soJson`.
+   - **Outra saída** (como as Etiquetas, que copiam ficheiros): um bloco próprio antes de escrever a página inicial, que acrescenta a sua secção a `seccoes`.
 4. Acrescenta `public/<nome>` ao `.gitignore`.
 5. **Verificação:**
    - a coleção aparece no menu do painel e na API;
@@ -338,6 +359,13 @@ Os Elementos leem-se com o **Seara** (`~/Documentos/Seara`, repositório privado
 - **Sintoma:** o `tinacms dev` ou o `build` falham com *Fields "h3" conflict because they return conflicting types "TokensColorsH3!" and "Float!"*.
 - **Causa:** o Tina junta os templates de uma coleção nas mesmas queries GraphQL. Dois templates podem ter um campo com o mesmo nome só se o tipo for igual; um `object` ou uma lista de objetos tem sempre um tipo próprio por template.
 - **O que fazer:** dá ao campo novo um nome distinto (foi por isso que o `text` usa `h1Size` e `customSizes`).
+
+### 16. Etiquetas
+- **Ficheiro apagado do Media Manager:** se uma etiqueta aponta para um ficheiro que já não existe, o gerador lança erro e o deploy para (o Pages continua com a versão anterior, por isso o link da etiqueta continua a funcionar). Corrige-se escolhendo outro ficheiro na etiqueta. O Media Manager não avisa ao apagar.
+- **Link muda com a extensão:** ver [Etiquetas](#etiquetas). Se for preciso um link sem extensão, teria de ser outra solução (ex.: um ficheiro HTML com redirecionamento, que não serve para `<img>` nem `<link rel="icon">`).
+- **Cache:** o Pages deixa o browser guardar os ficheiros até 10 minutos, e os browsers guardam os favicons durante mais tempo.
+- **Em local:** a pré-visualização da imagem no campo `file` aparece partida na porta 4001 (ver [ponto 6](#6-basepath-imagens-e-urls)); o link mostrado é sempre o do Pages.
+- **`slug()`:** o link no painel (`LinkEtiqueta`) e o ficheiro publicado usam o `slug()` de `campos.ts` e do `gerar.mjs`, que têm de ficar iguais (ver [ponto 7](#7-cores-e-listas-personalizadas)).
 
 ## Pendente
 1. Decidir o mapeamento das cores e dos tamanhos de texto nas libs, por exemplo, o fundo do botão principal = `--color--primary`. A escolha da configuração já está decidida (`data-config`). Não há token para o texto sobre as cores principal, secundária e terciária.

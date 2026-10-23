@@ -1,6 +1,7 @@
 import { defineConfig } from 'tinacms'
 import { button } from './colecoes/button'
 import { element } from './colecoes/element'
+import { tag } from './colecoes/tag'
 import { tokens } from './colecoes/tokens'
 import { guia } from './guia'
 
@@ -18,6 +19,6 @@ export default defineConfig({
     return cms
   },
   schema: {
-    collections: [tokens, button, element],
+    collections: [tokens, button, element, tag],
   },
 })

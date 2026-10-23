@@ -1,12 +1,11 @@
 import { createElement as h, Fragment, useEffect, useState, type ReactNode } from 'react'
+import { PAGES } from './campos'
 import { GRUPO, IDIOMAS, TIPOS } from './colecoes/element'
 import { PARES } from './templates/colors'
 
 // Guia para quem usa o que o AMEDAS publica: páginas próprias no menu do painel (secção "Site"),
 // acrescentadas no cmsCallback do tina/config.ts. Só leem: não gravam nada.
 // As listas "ao vivo" leem os ficheiros publicados (CSS e JSON), por isso mostram o que as apps recebem.
-
-const PAGES = 'https://projectsav.github.io/AMEDAS'
 
 // ---------- Peças de texto ----------
 
@@ -195,6 +194,7 @@ const Comecar = () =>
           ['Cores e tamanhos de texto', link(`${PAGES}/tokens/tokens.css`)],
           ['Medidas dos botões', link(`${PAGES}/button/button.css`)],
           ['Textos (Elementos), um JSON por ficheiro do painel', link(`${PAGES}/element/index.json`)],
+          ['Ficheiros com link fixo (Etiquetas)', link(`${PAGES}/tag/index.json`)],
         ],
       ),
       h('p', { style: { margin: '0 0 12px' } }, 'Todos os links estão na página inicial: ', link(`${PAGES}/`), '.'),
@@ -241,6 +241,7 @@ export default function RootLayout({ children }) {
         'Guia: Tamanhos de texto: variáveis `--font-size-*`.',
         'Guia: Botões: medidas dos botões e como as juntar às cores.',
         'Guia: Elementos: ler os textos em vários idiomas.',
+        'Guia: Etiquetas: ficheiros do Media Manager com um link que não muda (ex.: o favicon).',
       ]),
     ),
   )
@@ -562,6 +563,71 @@ const grupos = versao.contents
   )
 }
 
+const Etiquetas = () => {
+  const lido = usePublicado('tag/index.json')
+  let etiquetas: { name: string; file: string; source: string }[] = []
+  try {
+    etiquetas = JSON.parse(lido?.texto ?? '[]')
+  } catch {}
+  const imagem = /\.(png|jpe?g|gif|webp|svg|avif|ico)$/i
+  // As pré-visualizações vêm de onde se leu a lista (local ou Pages); os links mostram sempre o Pages.
+  const pasta = lido?.url.replace(/index\.json$/, '') ?? `${PAGES}/tag/`
+  return pagina(
+    'Etiquetas',
+    'Uma etiqueta é um nome fixo que aponta para um ficheiro do Media Manager. O ficheiro é publicado em `tag/<nome>.<extensão>`, e esse link não muda quando quem edita escolhe outro ficheiro para a etiqueta. Serve, por exemplo, para ter vários favicons e escolher no painel qual está em uso.',
+    seccao(
+      'Usar uma etiqueta',
+      codigo(`
+<link rel="icon" href="${PAGES}/tag/favicon.png">
+<img src="${PAGES}/tag/logotipo.svg" alt="Logótipo">`),
+      lista([
+        'O nome no link é o da etiqueta em minúsculas, sem acentos e com `-` no lugar dos espaços ("Logótipo Principal" → `logotipo-principal`).',
+        'A extensão é a do ficheiro escolhido. Se quem edita trocar um `.png` por um `.svg`, o link muda: combina com a equipa manter a extensão de cada etiqueta.',
+        'Os ficheiros sem etiqueta continuam publicados no seu caminho de sempre (`uploads/<ficheiro>`).',
+      ]),
+      nota('O GitHub Pages deixa o browser guardar os ficheiros em cache até 10 minutos, e os browsers guardam os favicons durante mais tempo. Depois de trocar o ficheiro, pode demorar a aparecer.'),
+    ),
+    seccao(
+      'Etiquetas publicadas',
+      origem(lido, 'tag/index.json'),
+      etiquetas.length
+        ? tabela(
+            ['Etiqueta', 'Link', 'Ficheiro escolhido', ''],
+            etiquetas.map((e) => [
+              e.name,
+              link(`${PAGES}/tag/${e.file}`, `tag/${e.file}`),
+              `\`${e.source}\``,
+              imagem.test(e.file)
+                ? h('img', { src: pasta + e.file, alt: '', style: { maxWidth: 64, maxHeight: 32, verticalAlign: 'middle' } })
+                : '',
+            ]),
+          )
+        : lido
+          ? p('Ainda não há etiquetas.')
+          : null,
+    ),
+    seccao(
+      'Lista em JSON',
+      p('O `tag/index.json` lista as etiquetas, para quem as quiser descobrir sem as conhecer de antemão:'),
+      codigo(`
+type Etiqueta = {
+  name: string    // nome no painel
+  file: string    // ficheiro publicado, em tag/ (ex.: "favicon.png")
+  source: string  // ficheiro escolhido no Media Manager (ex.: "/uploads/favicon-natal.png")
+}
+type Ficheiro = Etiqueta[]`),
+    ),
+    seccao(
+      'No painel',
+      lista([
+        'Em Etiquetas → tags, acrescenta uma etiqueta, dá-lhe um nome e escolhe o ficheiro (abre o Media Manager).',
+        'Para trocar o ficheiro de uma etiqueta, escolhe outro ficheiro; não mudes o nome.',
+        'Não apagues do Media Manager um ficheiro que esteja numa etiqueta: a publicação para até a etiqueta apontar para outro ficheiro.',
+      ]),
+    ),
+  )
+}
+
 // ---------- Menu ----------
 
 const Livro = ({ className }: { className?: string }) =>
@@ -579,4 +645,5 @@ export const guia = [
   ['Guia: Tamanhos de texto', Texto],
   ['Guia: Botões', Botoes],
   ['Guia: Elementos', Elementos],
+  ['Guia: Etiquetas', Etiquetas],
 ].map(([name, Component]) => ({ __type: 'screen' as const, name, Component, Icon: Livro, layout: 'fullscreen' as const }))
