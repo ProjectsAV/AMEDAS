@@ -1,6 +1,100 @@
 {
   "items": [
     {
+      "name": "Modelos",
+      "contentBlock": [
+        {
+          "language": "default",
+          "contents": [
+            {
+              "type": "group",
+              "contents": [
+                {
+                  "type": "title",
+                  "content": "AEVO VAEA"
+                },
+                {
+                  "type": "item",
+                  "content": "5x5m"
+                },
+                {
+                  "type": "item",
+                  "content": "2 spaces"
+                },
+                {
+                  "type": "item",
+                  "content": "18 modules · ≈7.9 kWp indicative"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "contents": [
+                {
+                  "type": "title",
+                  "content": "AEVO VAEA"
+                },
+                {
+                  "type": "item",
+                  "content": "5x10m"
+                },
+                {
+                  "type": "item",
+                  "content": "4 spaces"
+                },
+                {
+                  "type": "item",
+                  "content": "36 modules · ≈15.8 kWp indicative"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "contents": [
+                {
+                  "type": "title",
+                  "content": "AEVO VALO"
+                },
+                {
+                  "type": "item",
+                  "content": "5x5m"
+                },
+                {
+                  "type": "item",
+                  "content": "2 spaces"
+                },
+                {
+                  "type": "item",
+                  "content": "42 modules · ≈18.5 kWp indicative"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "contents": [
+                {
+                  "type": "title",
+                  "content": "AEVO VALO"
+                },
+                {
+                  "type": "item",
+                  "content": "5x10m"
+                },
+                {
+                  "type": "item",
+                  "content": "4 spaces"
+                },
+                {
+                  "type": "item",
+                  "content": "72 modules · ≈31.7 kWp indicative"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Foundations",
       "contentBlock": [
         {
