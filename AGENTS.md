@@ -4,7 +4,7 @@ Repositório de **conteúdo de design** gerido por pessoas não técnicas atrav�
 
 Não há aplicação nem framework: só o Tina, os conteúdos e o script `scripts/gerar.mjs` (com a página inicial em `scripts/pagina-inicial.mjs`).
 
-**Estado (2026-10-12):** o projeto está em produção. O repositório público é `ProjectsAV/AMEDAS` (o Pages fica em `https://projectsav.github.io/AMEDAS/`) e o projeto TinaCloud chama-se `AMEDAS`. Os secrets `TINA_CLIENT_ID` e `TINA_TOKEN` estão definidos, o `pages.yml` corre com sucesso e quem edita já grava pelo painel publicado (os commits *TinaCMS content update* / *Update from TinaCMS* vêm daí). Antes de trabalhar em local, faz `git pull`, porque o painel faz commits diretamente no `main`.
+**Estado (2026-10-29):** o projeto está em produção. O repositório público é `ProjectsAV/AMEDAS` (o Pages fica em `https://projectsav.github.io/AMEDAS/`) e o projeto TinaCloud chama-se `AMEDAS`. Os secrets `TINA_CLIENT_ID` e `TINA_TOKEN` estão definidos, o `pages.yml` corre com sucesso e quem edita já grava pelo painel publicado (os commits *TinaCMS content update* / *Update from TinaCMS* vêm daí). Antes de trabalhar em local, faz `git pull`, porque o painel faz commits diretamente no `main`.
 
 ## Fluxo de dados
 
@@ -99,7 +99,7 @@ O `text.json` (template `text`) guarda tamanhos em px:
 
 Cada ficheiro em `conteudo/element/` tem uma lista de elementos (publicado em `https://projectsav.github.io/AMEDAS/element/<ficheiro>.json`). Em TypeScript:
 ```ts
-type TextContent = { type: 'text' | 'title' | 'eyebrow' | 'subtitle' | 'item' | 'quote'; content: string }
+type TextContent = { type: 'text' | 'title' | 'eyebrow' | 'subtitle' | 'item' | 'quote'; content?: string }
 type GroupContent = { type: 'group'; content?: string; contents: TextContent[] }
 type Content = TextContent | GroupContent
 type ContentBlock = { language: Language; contents: Content[] }
@@ -121,7 +121,7 @@ type TextElement = { name: string; contentBlock: ContentBlock[] }
 - **`name`:** texto obrigatório (etiqueta "Nome") e **único no ficheiro** (comparado sem espaços nas pontas). Chama-se "Nome" no painel para não se confundir com o bloco do tipo `title` ("Título").
   - No painel, o `nomeValido` (`ui.validate` do `name`, em `element.ts`) mostra *"Escreve um nome"* ou *"Já existe um elemento com este nome"* e bloqueia a gravação. Encontra os irmãos pelo caminho do campo (`items.2.name` → `items`).
   - O `gerar.mjs` volta a verificar (objeto `verificar`, por coleção `soJson`) e lança erro, o que faz parar o deploy se o JSON for editado fora do painel.
-- **`contentBlock[].language`:** obrigatório e **único no item** (cada idioma aparece uma só vez). Os valores são `default`, `en`, `pt`, `es`, `fr`, `it`, `de`, `sv`, `ru`, `pl`, `no`, `ja`. A lista, com as etiquetas em português, está na constante `IDIOMAS` em `tina/colecoes/element.ts`, que é a única fonte de verdade.
+- **`contentBlock[].language`:** obrigatório e **único no item** (cada idioma aparece uma só vez). Os valores são `default`, `en`, `pt`, `es`, `fr`, `it`, `de`, `sv`, `ru`, `pl`, `no`, `ja`. A lista, com as etiquetas em português, está na constante `IDIOMAS` em `tina/colecoes/element.ts`, que é a fonte de verdade. O Seara tem uma cópia dos códigos no tipo `Language`.
   - `default` **não é um código de idioma**: significa "sem idioma específico, serve para todos". Os consumidores devem usá-lo como fallback quando não houver um `contentBlock` no idioma pedido.
   - Os códigos seguem ISO 639-1 (`no` = norueguês, `sv` = sueco, `ja` = japonês).
 - **`contentBlock[].contents[]`:** pelo menos um bloco, no idioma do seu `contentBlock`. Cada bloco é de texto (`{ type, content }`) ou um grupo (`{ type: 'group', contents[] }`).
@@ -144,7 +144,7 @@ type TextElement = { name: string; contentBlock: ContentBlock[] }
   - No fim da lista, o botão **+ Acrescentar idioma** (a toda a largura, com contorno tracejado) cria um `contentBlock` com o primeiro idioma de `IDIOMAS` que ainda não tem secção e um bloco do primeiro tipo de `TIPOS` (`title`). Desativa-se quando todos os idiomas têm secção.
   - Um `contentBlock` sem `language` (editado fora do painel) aparece com o seletor em *Escolhe o idioma*.
   - Os campos `language`, `contents`, `type` e `content` declarados em `fields` continuam a definir a forma do JSON e da API GraphQL; o componente só muda o aspeto.
-- **Pré-visualização:** cada secção tem um cartão com os blocos desse idioma, que se atualiza enquanto se escreve. Para não parecer parte do formulário, o cartão está dentro de uma moldura de janela: uma barra escura com três pontos, "Pré-visualização" e "ao vivo"; um fundo ponteado; e, no fim, uma nota a dizer que é só para orientação. A ordem é sempre a da constante `ORDEM` de `blocos.ts` (antetítulo, título, subtítulo, texto, itens, grupos e citação), seja qual for a ordem dos blocos; dentro de cada grupo, igual. Os itens aparecem numa lista com marcadores e os grupos em caixas com contorno, pela ordem deles. Os tipos sem bloco não aparecem, e um bloco vazio mostra o nome do tipo a cinzento e em itálico. O aspeto de cada tipo está na constante `ESTILOS` de `blocos.ts`. É só uma ajuda visual com estilos fixos (o antetítulo usa o laranja do Tina): não usa os Tokens nem grava nada, e as libs podem mostrar o conteúdo de outra forma. Um tipo novo que não esteja em `ESTILOS` aparece no fim, com o estilo do texto.
+- **Pré-visualização:** cada secção tem um cartão com os blocos desse idioma, que se atualiza enquanto se escreve. Para não parecer parte do formulário, o cartão está dentro de uma moldura de janela: uma barra escura com três pontos, "Pré-visualização" e "ao vivo"; um fundo ponteado; e, no fim, uma nota a dizer que é só para orientação. A ordem é sempre a da constante `ORDEM` de `blocos.ts` (antetítulo, título, subtítulo, texto, itens, grupos e citação), seja qual for a ordem dos blocos; dentro de cada grupo, igual. Os itens aparecem numa lista com marcadores e os grupos em caixas com contorno, pela ordem deles. Os tipos sem bloco não aparecem, e um bloco vazio mostra o nome do tipo a cinzento e em itálico. O aspeto de cada tipo está na constante `ESTILOS` de `blocos.ts`. É só uma ajuda visual com estilos fixos (o antetítulo usa o laranja do Tina): não usa os Tokens nem grava nada, e as libs podem mostrar o conteúdo de outra forma. Um tipo novo que não esteja em `ORDEM` aparece no fim; se não estiver em `ESTILOS`, aparece com o estilo do texto.
 - **Validação:** o `idiomasValidos` (`ui.validate` do `contentBlock`) bloqueia a gravação sem idiomas, com um idioma vazio ou repetido, com um idioma sem blocos, com um bloco sem tipo, com um tipo não repetível repetido na mesma lista, com um grupo vazio ou com um grupo dentro de um grupo (função `blocosValidos`). O `gerar.mjs` volta a verificar (`verificarBlocos`: sem idiomas, idioma em falta ou repetido, idioma ou grupo sem blocos, tipo fora de `TIPOS_BLOCO`, grupo dentro de grupo, tipo repetido) e lança erro.
 - **Valores iniciais (`defaultItem`):** um item novo criado com **+** começa com nome vazio e um `contentBlock` no idioma `default` com um bloco `text` vazio.
 - **Na lista do painel:** cada item aparece com o `name`.
@@ -182,7 +182,7 @@ Os URLs mostrados são absolutos com `BASE_URL` (no CI) e relativos sem ele (em 
 
 O `tina/guia.ts` acrescenta ao menu do painel, na secção *Site*, as páginas **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões**, **Elementos** e **Etiquetas**, para quem usa o que o AMEDAS publica. São *screen plugins* do Tina, registados no `cmsCallback` do `tina/config.ts`, e o URL é `#/screens/<slugify do nome>` (o Tina tira acentos e símbolos: `guia_cores`, `guia_botes`).
 - **Ao vivo:** as listas de variáveis e de ficheiros leem o que está publicado (`tokens.css`, `button.css`, `element/index.json`, `tag/index.json`), primeiro ao lado do painel (`../`) e, se falhar, no Pages. Na porta 4001 do `tinacms dev` usam o Pages; na 3000 usam o `public/` local. A página das Cores aplica o `tokens.css` enquanto está aberta, para as amostras e o exemplo com `data-config`.
-- **Escrito à mão:** os textos e os exemplos de código (nomes de variáveis, forma do JSON, URLs). **Ao mudar nomes de variáveis, a forma de um JSON ou o que é publicado, atualiza também o `guia.ts`.** As etiquetas vêm de `PARES`, `IDIOMAS` e `TIPOS`.
+- **Escrito à mão:** os textos e os exemplos de código (nomes de variáveis, forma do JSON, URLs). **Ao mudar nomes de variáveis, a forma de um JSON ou o que é publicado, atualiza também o `guia.ts`.** As etiquetas vêm de `PARES`, `IDIOMAS`, `TIPOS` e `GRUPO`.
 
 ### Convenções de nomes
 
@@ -235,8 +235,13 @@ Cada receita termina com uma verificação. Só está feita quando essa verifica
    - **Só JSON:** acrescenta o nome a `soJson`.
    - **Outra saída** (como as Etiquetas, que copiam ficheiros): um bloco próprio antes de escrever a página inicial, que acrescenta a sua secção a `seccoes`.
 4. Acrescenta `public/<nome>` ao `.gitignore`.
-5. **Verificação:**
+5. Atualiza os textos escritos à mão sobre o que é publicado:
+   - no `tina/guia.ts`, uma página da coleção e uma linha na tabela *Ficheiros publicados* da página Começar;
+   - no README, a tabela *O que é publicado*;
+   - em `scripts/pagina-inicial.mjs`, o texto do cartão *Painel de edição*.
+6. **Verificação:**
    - a coleção aparece no menu do painel e na API;
+   - o guia, o README e o cartão do painel na página inicial falam da coleção;
    - a coleção aparece em `public/index.html`, com a etiqueta do painel (corre o `tinacms dev` antes, para o lock a ter);
    - `public/<nome>/` é gerado;
    - `git status` não mostra `public/<nome>`.
@@ -259,7 +264,7 @@ Cada ponto tem: sintoma → causa → o que fazer.
 
 ### 1. Duas fontes de verdade: schema e gerador
 - **Sintoma:** o CSS sai com `undefinedpx`, ou o `gerar.mjs` rebenta com `Cannot read properties of undefined`.
-- **Causa:** a forma do JSON está definida em `tina/templates` e é lida à mão no `gerar.mjs`. O filtro do gerador só descarta `null` e `''`; um campo em falta vira `` `${undefined}px` `` → `undefinedpx`, CSS inválido publicado sem aviso. Um objeto em falta (`t.border.color`) faz parar o build.
+- **Causa:** a forma do JSON está definida em `tina/templates` e é lida à mão no `gerar.mjs`. O filtro do gerador só descarta `null` e `''`; um campo em falta vira `` `${undefined}px` `` → `undefinedpx`, CSS inválido publicado sem aviso. Um texto em falta que o gerador passa ao `slug()` faz parar o build (ex.: uma cor ou um tamanho personalizado sem `name`).
 - **O que fazer:** cada alteração ao schema obriga a rever a função correspondente no `gerar.mjs` e os JSON existentes. Depois de correr o gerador, procura `undefined` no CSS.
 
 ### 2. O CSS não é gerado em `npm run dev`
@@ -305,7 +310,7 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
 ### 9. Coleção Elementos
 - **Ficheiro sem elementos:** é gravado como `{}`, sem `items`. Os consumidores devem tratar a falta de `items` como `[]`.
 - **Campos vazios:** um `content` vazio pode ser omitido em vez de gravado como `""` (os grupos vêm sempre sem `content`). Cada item tem sempre `name` e pelo menos um `contentBlock`; cada `contentBlock` tem `language` e pelo menos um bloco em `contents`, e cada bloco tem `type` (o painel e o gerador exigem-no).
-- **Acrescentar um tipo de bloco:** acrescenta-o a `TIPOS` em `element.ts` e a `TIPOS_BLOCO` no `gerar.mjs` (e a `REPETIVEIS` nos dois, se se puder repetir), e o seu aspeto a `ESTILOS` em `blocos.ts`. Os tipos repetíveis aparecem na pré-visualização como lista com marcadores. Acrescentar tipos não parte os consumidores atuais, porque procuram os blocos pelo `type`. Atualiza também o tipo `TextContent` do Seara. Remover um tipo faz o gerador rejeitar os blocos que o usam: antes, procura `"type": "<tipo>"` em `conteudo/element/`.
+- **Acrescentar um tipo de bloco:** acrescenta-o a `TIPOS` em `element.ts` e a `TIPOS_BLOCO` no `gerar.mjs` (e a `REPETIVEIS` nos dois, se se puder repetir), e, em `blocos.ts`, o seu aspeto a `ESTILOS` e a sua posição na pré-visualização a `ORDEM`. Os tipos repetíveis aparecem na pré-visualização como lista com marcadores. Acrescentar tipos não parte os consumidores atuais, porque procuram os blocos pelo `type`. Atualiza também o tipo `TextContent` do Seara. Remover um tipo faz o gerador rejeitar os blocos que o usam: antes, procura `"type": "<tipo>"` em `conteudo/element/`.
 - **Nome do ficheiro:**
   - O Tina só aceita `a-z A-Z 0-9 - _ . /` (regex `RELATIVE_PATH_REGEX` em `@tinacms/schema-tools`). Espaços nunca são aceites.
   - O `ui.filename.parse` é `nomeFicheiro()` de `tina/campos.ts`: tira acentos, troca espaços e `/` por `-` e remove o resto, incluindo `.`. Mantém maiúsculas, `-` e `_`. A `/` fica de fora porque criaria pastas.
@@ -315,7 +320,7 @@ Com `delete: false`, a opção **Rename** também desaparece; no código do Tina
   - **Maiúsculas:** `Menu.json` e `menu.json` são ficheiros diferentes no Linux e no Pages (os URLs distinguem maiúsculas), mas colidem num clone em macOS ou Windows. Quem consome tem de pedir o nome exato.
 - **Publicação:** o gerador apaga `public/element/` e recria-o (para refletir ficheiros apagados) e escreve `index.json`, porque o Pages não lista pastas.
 - **`language` em falta:** um `contentBlock` editado fora do painel pode não ter `language`. O painel mostra o seletor com *Escolhe o idioma* e o `idiomasValidos` não deixa gravar; o gerador lança erro.
-- **Acrescentar ou remover um idioma:** muda só a constante `IDIOMAS`. Remover um código deixa os elementos que já o usam com um valor que o seletor não mostra; antes de remover, procura `"language": "<código>"` em `conteudo/element/`.
+- **Acrescentar ou remover um idioma:** muda a constante `IDIOMAS` e o tipo `Language` do Seara (`src/types.ts`), e lança uma versão nova do Seara (ver [ponto 13](#13-do-lado-das-libs)). O seletor do painel e o guia leem o `IDIOMAS`; o gerador não verifica os códigos. Remover um código deixa os elementos que já o usam com um valor que o seletor não mostra; antes de remover, procura `"language": "<código>"` em `conteudo/element/`.
 - **Histórico da forma (2026-10-12 a 2026-10-22), para quem consome:**
   1. A coleção chamava-se `elementos` (pasta `conteudo/elementos/`, publicada em `/AMEDAS/elementos/`) e cada elemento tinha `type` em vez de `title`. Na API GraphQL a query passou a `elementConnection`.
   2. Depois, cada elemento deixou de ter `content` e `language` diretos e passou a ter `contents[]`. Na migração, os elementos com o mesmo `title` no mesmo ficheiro juntaram-se num só (ex.: o `titulo` pt e en do `exemplo.json`).
@@ -345,7 +350,7 @@ Um `import` de um ficheiro que já não existe em `tina/config.ts` faz falhar o 
 - **GitHub Pages:** num repositório privado exige um plano pago, e o site publicado (CSS, JSON, imagens, `/admin`) é **público**. O `/admin` exige login do TinaCloud.
 
 ### 13. Do lado das libs
-O componente Button do projeto irmão `~/Secretária/Button-Tina` ainda lê `--btn-primary-bg`, `--btn-radius`, etc., nomes que este repositório já não gera. As libs têm de passar a ler os nomes neutros `--color--*` (a app escolhe a marca com `data-config`), `--font-size-*` e `--<tipo>-btn-*`. As antigas `--color-<k>` (com um só hífen) também já não existem.
+O componente Button do projeto `Button-Tina` (antes em `~/Secretária/Button-Tina`, que já não existe nesta máquina) lia `--btn-primary-bg`, `--btn-radius`, etc., nomes que este repositório já não gera. As libs têm de passar a ler os nomes neutros `--color--*` (a app escolhe a marca com `data-config`), `--font-size-*` e `--<tipo>-btn-*`. As antigas `--color-<k>` (com um só hífen) também já não existem.
 
 Estados como `:hover` e o sublinhado da página ativa não funcionam com estilos inline (`style={{…}}`): precisam de classes CSS na lib.
 
