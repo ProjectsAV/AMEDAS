@@ -223,7 +223,7 @@ export default function RootLayout({ children }) {
     seccao(
       'Quando chegam as alterações',
       lista([
-        'Ao gravar no painel, o GitHub publica os ficheiros novos em 1 a 2 minutos.',
+        'Ao gravar no painel, o GitHub publica os ficheiros novos em 2 a 3 minutos.',
         'O GitHub Pages deixa o browser guardar os ficheiros em cache até 10 minutos. Para ver logo a alteração, recarrega a página sem cache (Ctrl+Shift+R).',
       ]),
     ),

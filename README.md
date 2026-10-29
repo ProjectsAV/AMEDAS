@@ -9,7 +9,7 @@
 
 1. Quem edita altera os conteúdos no painel ([TinaCMS](https://tina.io)). Cada gravação é um commit no `main` deste repositório.
 2. O commit dispara o GitHub Actions (`.github/workflows/pages.yml`), que corre `npm run build`. O script `scripts/gerar.mjs` converte os JSON de `conteudo/` em CSS e verifica-os.
-3. O resultado é publicado no GitHub Pages, em menos de dois minutos.
+3. O resultado é publicado no GitHub Pages, em 2 a 3 minutos.
 
 O painel tem um guia (secção *Site* do menu: **Guia: Começar**, **Cores**, **Tamanhos de texto**, **Botões**, **Elementos** e **Etiquetas**) com os nomes das variáveis e exemplos de código, sempre atualizado com o que está publicado.
 
@@ -40,8 +40,8 @@ Os JSON de cada coleção também são publicados ao lado do CSS.
 }
 ```
 
-- **Cores:** as libs usam os nomes neutros (`--color--primary`, `--color--h1`…). O tema escuro aplica-se sozinho (`prefers-color-scheme`) ou com `data-theme="dark"`.
-- **Marcas:** cada marca é uma configuração de cores no painel. A app escolhe-a com `data-config="<marca>"` num contentor; sem ele, aplica-se a primeira configuração (a base).
+- **Cores:** as libs usam os nomes neutros (`--color--primary`, `--color--h1`…). O tema escuro aplica-se sozinho (`prefers-color-scheme`) ou com `data-theme="dark"` no `<html>` (só funciona aí; `data-theme="light"` força o tema claro).
+- **Marcas:** cada marca é uma configuração de cores no painel. A app escolhe-a com `data-config="<marca>"` num contentor; sem ele, aplica-se a primeira configuração (a base). O valor é o nome da configuração em minúsculas, sem acentos e com `-` no lugar dos espaços ("Arva Vare" → `arva-vare`). Se o nome mudar no painel, as apps têm de mudar o atributo.
 
 ### Textos (Elementos)
 
@@ -65,6 +65,7 @@ Cada ficheiro de Elementos é uma lista de textos, cada um com um nome e uma ver
 
 - **Tipos de bloco:** `title` (título), `subtitle` (subtítulo), `text` (texto), `eyebrow` (antetítulo), `quote` (citação) e `item` (item de lista). Só o `item` se pode repetir; a ordem dos itens é a da lista.
 - **Grupos:** um bloco `group` junta blocos relacionados no seu `contents` (ex.: uma pergunta e a resposta, um cartão). Pode haver vários grupos, mas não há grupos dentro de grupos.
+- **Casos vazios:** um ficheiro sem elementos vem como `{}` (trata a falta de `items` como `[]`), e um bloco vazio pode vir sem `content`.
 
 Em TypeScript, o mais simples é usar o cliente [`@arva/seara`](https://github.com/ProjectsAV/Seara) (privado), que já tem os tipos.
 
@@ -79,17 +80,18 @@ Uma etiqueta é um nome que aponta para um ficheiro do Media Manager. O ficheiro
 - O nome no link é o da etiqueta em minúsculas, sem acentos e com `-` no lugar dos espaços. A extensão é a do ficheiro escolhido: se mudar (ex.: de `.png` para `.svg`), o link muda.
 - O número de etiquetas é livre (pode não haver nenhuma), e os ficheiros sem etiqueta continuam em `uploads/<ficheiro>`.
 - As etiquetas editam-se na coleção **Etiquetas** do painel, porque o Media Manager do Tina não se pode estender.
+- Antes de apagar um ficheiro do Media Manager, confirma que nenhuma etiqueta o usa. Se usar, a publicação para até a etiqueta apontar para outro ficheiro (o site continua com a versão anterior).
 
 ## Desenvolvimento
 
-Requer Node 22 ou 24 (o CI usa o 24).
+O CI usa o Node 24. Em local também funciona com versões mais recentes; se a CLI do Tina falhar, experimenta o 24.
 
 ```bash
 npm install
 npm run dev          # painel em http://localhost:4001/AMEDAS/admin/ e public/ em http://localhost:3000
 ```
 
-- **Em local, o painel grava diretamente nos JSON de `conteudo/`**, que são os dados reais. Antes de testar, faz `git pull` (o painel publicado faz commits no `main`). No fim, desfaz os testes com `git restore conteudo`.
+- **Em local, o painel grava diretamente nos JSON de `conteudo/`**, que são os dados reais. Antes de testar, faz `git pull` (o painel publicado faz commits no `main`). No fim, desfaz os testes com `git restore conteudo` e apaga os ficheiros criados durante os testes com `git clean -f conteudo` (vê primeiro a lista com `git clean -n conteudo`).
 - **O `dev` não gera o CSS.** Corre `node scripts/gerar.mjs` (ou `node --watch-path=conteudo scripts/gerar.mjs` noutro terminal).
 - **Build local:** `npm run build:local`. O `npm run build` é o de produção e precisa de `TINA_CLIENT_ID` e `TINA_TOKEN`.
 - **Ao mudar o schema** (`tina/`), o `tina/tina-lock.json` atualizado pelo `npm run dev` tem de ir no mesmo commit.
