@@ -5,8 +5,7 @@ import { wrapFieldsWithMeta } from 'tinacms'
 // os blocos à esquerda e a pré-visualização à direita. O Tina abre cada item de uma lista num formulário à parte;
 // este componente mostra tudo de uma vez, para se ver com scroll.
 // Um bloco é { type, content } ou um grupo { type: 'group', contents[] } com blocos de texto (um nível só).
-// Mínimo 1 secção, 1 bloco por secção e 1 bloco por grupo; cada idioma numa só secção; em cada secção e em cada
-// grupo, os tipos que não são repetíveis só aparecem uma vez.
+// Mínimo 1 secção, 1 bloco por secção e 1 bloco por grupo; cada idioma numa só secção; todos os tipos se podem repetir.
 
 type Opcao = { value: string; label: string }
 type Bloco = { type?: string; content?: string; contents?: Bloco[] }
@@ -40,12 +39,15 @@ const ESTILOS: Record<string, object> = {
   quote: { fontSize: 16, fontStyle: 'italic', lineHeight: 1.5, color: '#4b5563', borderLeft: '3px solid #ec4815', paddingLeft: 12 },
 }
 
-// Ordem no cartão, seja qual for a ordem dos blocos ("group" = os grupos). Os repetíveis (itens) aparecem numa lista
-// com marcadores e os grupos em caixas, pela ordem deles. Um tipo novo que não esteja aqui aparece no fim, como texto.
+// Ordem no cartão, seja qual for a ordem dos blocos ("group" = os grupos). Os blocos do mesmo tipo e os grupos
+// aparecem pela ordem deles. Um tipo novo que não esteja aqui aparece no fim, como texto.
 const ORDEM = ['eyebrow', 'title', 'subtitle', 'text', 'item', 'group', 'quote']
 
+// Tipos que aparecem no cartão numa lista com marcadores e que se escrevem numa caixa de uma linha.
+const LISTAS = ['item']
+
 // Índice do bloco do mesmo tipo antes (-1) ou depois (+1) do bloco k, ou undefined se não houver:
-// a ordem só conta entre itens e entre grupos.
+// a ordem só conta entre blocos do mesmo tipo e entre grupos (o cartão junta-os por tipo).
 const vizinho = (lista: Bloco[], k: number, sentido: number) => {
   const mesmos = lista.flatMap((x, j) => (x?.type === lista[k]?.type ? [j] : []))
   return mesmos[mesmos.indexOf(k) + sentido]
@@ -75,10 +77,9 @@ const setas = (lista: Bloco[], k: number, mudar: (novos: Bloco[]) => void) => {
   return [seta('↑', -1, 'Subir'), seta('↓', 1, 'Descer')]
 }
 
-export const blocos = (tipos: Opcao[], idiomas: Opcao[], repetiveis: string[], tipoGrupo: string) => {
-  // Tipo de um bloco novo: o primeiro tipo não repetível ainda livre na lista; se não houver, o primeiro repetível.
-  const tipoLivre = (lista: Bloco[]) =>
-    tipos.find((t) => !repetiveis.includes(t.value) && !lista.some((b) => b?.type === t.value))?.value ?? repetiveis[0]
+export const blocos = (tipos: Opcao[], idiomas: Opcao[], tipoGrupo: string) => {
+  // Tipo de um bloco novo: o primeiro tipo ainda sem bloco na lista; se já houver todos, o item de lista.
+  const tipoLivre = (lista: Bloco[]) => tipos.find((t) => !lista.some((b) => b?.type === t.value))?.value ?? LISTAS[0]
 
   // Linhas do cartão para uma lista de blocos (de um idioma ou de um grupo).
   const linhas = (lista: Bloco[]): any[] => {
@@ -107,7 +108,7 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[], repetiveis: string[], t
         ...(!b.content?.trim() && { color: '#d1d5db', fontStyle: 'italic' }),
       })
       const texto = (b: Bloco) => (b.content?.trim() ? b.content : nome)
-      if (repetiveis.includes(tipo))
+      if (LISTAS.includes(tipo))
         return h(
           'ul',
           { key: tipo, style: { margin: 0, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 4 } },
@@ -194,7 +195,9 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[], repetiveis: string[], t
   const linha = (lista: Bloco[], mudarLista: (novos: Bloco[]) => void, minimo: string) => (k: number) => {
     const b = lista[k]
     const mudar = (parte: Bloco) => mudarLista(lista.map((x, j) => (j === k ? { ...x, ...parte } : x)))
-    const repetivel = repetiveis.includes(b?.type ?? '')
+    const umaLinha = LISTAS.includes(b?.type ?? '')
+    // ↑ e ↓ só quando há outro bloco do mesmo tipo nesta lista.
+    const repetido = lista.some((x, j) => j !== k && x?.type === b?.type)
     const podeApagar = lista.length > 1
 
     return h(
@@ -208,18 +211,7 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[], repetiveis: string[], t
           'select',
           { value: b?.type ?? '', onChange: (e: any) => mudar({ type: e.target.value }), style: { ...caixa, width: '100%' } },
           !b?.type && h('option', { value: '' }, 'Escolhe o tipo'),
-          // Um tipo não repetível já usado noutro bloco da mesma lista aparece desativado.
-          ...tipos.map((t) =>
-            h(
-              'option',
-              {
-                key: t.value,
-                value: t.value,
-                disabled: !repetiveis.includes(t.value) && lista.some((x, j) => j !== k && x?.type === t.value),
-              },
-              t.label,
-            ),
-          ),
+          ...tipos.map((t) => h('option', { key: t.value, value: t.value }, t.label)),
         ),
       ),
       h(
@@ -228,14 +220,14 @@ export const blocos = (tipos: Opcao[], idiomas: Opcao[], repetiveis: string[], t
         etiqueta('Conteúdo'),
         h('textarea', {
           placeholder: 'Conteúdo',
-          rows: repetivel ? 1 : 3,
+          rows: umaLinha ? 1 : 3,
           value: b?.content ?? '',
           onChange: (e: any) => mudar({ content: e.target.value }),
           style: { ...caixa, width: '100%', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' },
         }),
       ),
       // Alinha os botões com as caixas, por baixo das etiquetas.
-      repetivel && h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, marginTop: 20 } }, ...setas(lista, k, mudarLista)),
+      repetido && h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, marginTop: 20 } }, ...setas(lista, k, mudarLista)),
       h(
         'button',
         {

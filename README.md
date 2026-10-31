@@ -63,7 +63,7 @@ Cada ficheiro de Elementos é uma lista de textos, cada um com um nome e uma ver
 ] }
 ```
 
-- **Tipos de bloco:** `title` (título), `subtitle` (subtítulo), `text` (texto), `eyebrow` (antetítulo), `quote` (citação) e `item` (item de lista). Só o `item` se pode repetir; a ordem dos itens é a da lista.
+- **Tipos de bloco:** `title` (título), `subtitle` (subtítulo), `text` (texto), `eyebrow` (antetítulo), `quote` (citação) e `item` (item de lista). Todos se podem repetir; a ordem dos blocos do mesmo tipo é a da lista.
 - **Grupos:** um bloco `group` junta blocos relacionados no seu `contents` (ex.: uma pergunta e a resposta, um cartão). Pode haver vários grupos, mas não há grupos dentro de grupos.
 - **Casos vazios:** um ficheiro sem elementos vem como `{}` (trata a falta de `items` como `[]`), e um bloco vazio pode vir sem `content`.
 

@@ -18,8 +18,8 @@ export const IDIOMAS = [
   { value: 'ja', label: 'Japonês (ja)' },
 ]
 
-// Tipos de bloco de texto. Os que não estão em REPETIVEIS só podem aparecer uma vez em cada idioma e em cada grupo.
-// O scripts/gerar.mjs tem as mesmas listas em TIPOS_BLOCO e REPETIVEIS: têm de ficar iguais.
+// Tipos de bloco de texto. Todos se podem repetir, em cada idioma e em cada grupo.
+// O scripts/gerar.mjs tem a mesma lista em TIPOS_BLOCO: têm de ficar iguais.
 export const TIPOS = [
   { value: 'title', label: 'Título (title)' },
   { value: 'text', label: 'Texto (text)' },
@@ -28,20 +28,16 @@ export const TIPOS = [
   { value: 'item', label: 'Item de lista (item)' },
   { value: 'quote', label: 'Citação (quote)' },
 ]
-export const REPETIVEIS = ['item']
 
 // Tipo dos blocos que juntam outros blocos relacionados (ex.: uma pergunta e a resposta), em "contents".
 // Pode repetir-se, mas só no primeiro nível: um grupo não tem grupos. O scripts/gerar.mjs tem o mesmo valor em GRUPO.
 export const GRUPO = 'group'
 
-// Blocos de um idioma (comGrupos) ou de um grupo: pelo menos um, todos com tipo, sem repetir os tipos
-// que não estão em REPETIVEIS; os grupos são validados da mesma forma. Devolve a mensagem de erro, ou undefined.
+// Blocos de um idioma (comGrupos) ou de um grupo: pelo menos um, todos com tipo; os grupos são validados
+// da mesma forma. Devolve a mensagem de erro, ou undefined.
 const blocosValidos = (blocos: any[], comGrupos: boolean): string | undefined => {
   if (!blocos.length) return comGrupos ? 'Cada idioma tem de ter pelo menos um bloco' : 'Cada grupo tem de ter pelo menos um bloco'
   if (blocos.some((b) => !b?.type)) return 'Escolhe o tipo de cada bloco'
-  const tipos = blocos.map((b) => b.type)
-  if (tipos.some((t, i) => !REPETIVEIS.includes(t) && t !== GRUPO && tipos.indexOf(t) !== i))
-    return 'Cada tipo (exceto o item de lista) só pode aparecer uma vez em cada idioma e em cada grupo'
   for (const b of blocos.filter((b) => b.type === GRUPO)) {
     if (!comGrupos) return 'Um grupo não pode ter outros grupos'
     const erro = blocosValidos(b.contents ?? [], false)
@@ -104,8 +100,8 @@ export const element: Collection = {
   },
   fields: [
     descricao(
-      'Lista de elementos. Cada elemento tem um nome e uma secção por idioma. Em cada idioma pode haver um título, ' +
-        'um subtítulo, um texto, um antetítulo, uma citação e vários itens de lista. Para conteúdos relacionados ' +
+      'Lista de elementos. Cada elemento tem um nome e uma secção por idioma. Em cada idioma pode haver títulos, ' +
+        'subtítulos, textos, antetítulos, citações e itens de lista, quantos forem precisos. Para conteúdos relacionados ' +
         '(ex.: perguntas e respostas), acrescenta grupos: cada grupo tem os seus blocos. ' +
         'Para ter o mesmo texto noutro idioma, acrescenta outro idioma ao elemento.',
     ),
@@ -123,12 +119,12 @@ export const element: Collection = {
         {
           name: 'contentBlock',
           label: 'Conteúdos',
-          description: 'Um ou mais idiomas, cada um com pelo menos um bloco. Os itens de lista podem repetir-se; os outros tipos, um de cada em cada grupo.',
+          description: 'Um ou mais idiomas, cada um com pelo menos um bloco. Qualquer tipo de bloco se pode repetir.',
           type: 'object',
           list: true,
           // O componente mostra uma secção por idioma (blocos e pré-visualização);
           // os campos abaixo definem a forma do JSON.
-          ui: { component: blocos(TIPOS, IDIOMAS, REPETIVEIS, GRUPO), validate: idiomasValidos },
+          ui: { component: blocos(TIPOS, IDIOMAS, GRUPO), validate: idiomasValidos },
           fields: [
             { name: 'language', label: 'Idioma', type: 'string', options: IDIOMAS },
             {

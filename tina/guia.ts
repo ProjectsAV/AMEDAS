@@ -502,7 +502,7 @@ type Ficheiro = { items?: TextElement[] }`),
       lista([
         'Cada item é um texto em todos os idiomas, e procura-se pelo `name` (único no ficheiro).',
         'Cada `contentBlock` é a versão num idioma, com pelo menos um bloco.',
-        'O `item` (item de lista) pode repetir-se, e a ordem dos itens é a da lista. Os outros tipos de texto aparecem no máximo uma vez em cada idioma e uma vez em cada grupo.',
+        'Todos os tipos de texto se podem repetir, em cada idioma e em cada grupo; a ordem dos blocos do mesmo tipo é a da lista. Um `find()` devolve só o primeiro bloco do tipo; para os ter todos, usa `filter()`.',
         'Um bloco `group` junta blocos relacionados (ex.: uma pergunta e a sua resposta) no seu `contents`. Pode haver vários grupos, mas um grupo não tem grupos dentro. O `content` de um grupo vem vazio ou não vem.',
         'Um `find()` por tipo só olha para o primeiro nível, por isso nunca apanha um bloco de dentro de um grupo. Quem não conhece os grupos nem os tipos novos continua a funcionar.',
         'Um ficheiro sem elementos vem como `{}`: trata a falta de `items` como `[]`.',
