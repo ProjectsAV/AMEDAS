@@ -103,4 +103,24 @@ npm run dev          # painel em http://localhost:4001/AMEDAS/admin/ e public/ e
 | `scripts/` | `gerar.mjs` (JSON → CSS, verificações) e a página inicial |
 | `public/` | Resultado do build (ignorado no git, exceto `public/uploads/`) |
 
-O [`AGENTS.md`](AGENTS.md) tem a documentação técnica completa: a forma de cada JSON, as receitas para acrescentar campos e coleções, e os pontos de falha conhecidos.
+## Desenvolvimento com IA
+
+O código deste repositório é escrito com o [Claude Code](https://claude.com/claude-code), o agente de programação da Anthropic. Trabalha diretamente no repositório: lê e edita ficheiros, corre o gerador e o build e testa o painel. Os commits feitos com ele têm a linha `Co-Authored-By: Claude …`.
+
+A IA só mexe no código e na documentação. Os conteúdos (`conteudo/`) são editados por pessoas, no painel.
+
+O processo assenta em dois ficheiros:
+
+| Ficheiro | Papel |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | Documentação técnica para agentes: a forma de cada JSON, as constantes que têm de ficar iguais em dois sítios, as receitas para acrescentar campos e coleções (cada uma com uma verificação) e os pontos de falha conhecidos. O Claude Code carrega-o no início de cada conversa, e o nome é a convenção que outras ferramentas (Codex, Cursor…) também procuram. |
+| [`CLAUDE.md`](CLAUDE.md) | Regras de trabalho do Claude: o ciclo abaixo. |
+
+Cada tarefa segue o mesmo ciclo:
+
+1. **Ler:** antes da primeira alteração, o Claude relê o `AGENTS.md` e avisa que o leu (**AGENTS.md lido:**).
+2. **Alterar e verificar:** faz a alteração e corre a verificação da receita correspondente (ex.: `node scripts/gerar.mjs` sem erros e sem `undefined` no CSS, ou o painel testado num Chromium headless).
+3. **Documentar:** na mesma tarefa, atualiza o `AGENTS.md` para continuar igual ao código (e este README, se mudar o que é publicado) e avisa (**AGENTS.md atualizado:**).
+4. **Rever:** quem pediu a tarefa revê o resultado e decide quando fazer commit.
+
+Assim, cada conversa nova começa com o contexto completo e atual do projeto, sem depender do que ficou dito em conversas anteriores.

@@ -42,7 +42,8 @@ libs React (outros repositórios): var(--color--primary), var(--main-btn-radius)
 | `tina/guia.ts` | Páginas do guia no menu do painel (ver [Guia no painel](#guia-no-painel)). |
 | `tina/componentes/linkEtiqueta.ts` | Componente `LinkEtiqueta`, que mostra o link publicado de cada etiqueta, e as funções `extensao` e `nomeDoFicheiro` (ver [Etiquetas](#etiquetas)). |
 | `tina/componentes/blocos.ts` | Componente React próprio para o `contentBlock` dos Elementos: uma secção por idioma, com o idioma em cima, os blocos (tipo e conteúdo) e os grupos de blocos à esquerda e um cartão de pré-visualização à direita (ver [Elementos](#elementos-e-idiomas)). |
-| `README.md` | Apresentação do projeto para pessoas (o que publica, como se usa, comandos). Atualiza-o quando mudar o que é publicado. |
+| `README.md` | Apresentação do projeto para pessoas (o que publica, como se usa, comandos) e, na secção *Desenvolvimento com IA*, o ciclo de trabalho do Claude descrito no `CLAUDE.md`. Atualiza-o quando mudar o que é publicado ou esse ciclo. |
+| `CLAUDE.md` | Regras de trabalho do Claude: ler este `AGENTS.md` antes de alterar e avisar que o leu; mantê-lo igual ao código depois de cada alteração e avisar quando o altera. Os factos sobre o projeto ficam aqui, não lá. |
 | `tina/tina-lock.json` | Schema compilado. É **gerado** pelo `tinacms dev` (o `build:local` não o atualiza), mas **tem de ir para o git**, porque o TinaCloud lê o schema a partir dele. |
 | `tina/__generated__/` | Cliente e tipos gerados. Ignorado no git; nunca se edita à mão. |
 | `conteudo/` | Os JSON editados pelo Tina. |
