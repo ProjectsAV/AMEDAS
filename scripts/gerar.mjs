@@ -174,20 +174,25 @@ for (const [colecao, templates] of Object.entries(colecoes)) {
 // com um index.json que lista os ficheiros (o Pages não deixa listar pastas).
 const soJson = ['element']
 
-// Tipos de bloco dos Elementos (todos se podem repetir). Têm de ficar iguais a TIPOS e GRUPO em tina/colecoes/element.ts.
+// Tipos de bloco dos Elementos. Têm de ficar iguais a TIPOS, REPETIVEIS e GRUPO em tina/colecoes/element.ts.
 const TIPOS_BLOCO = ['title', 'text', 'eyebrow', 'subtitle', 'item', 'quote']
+const REPETIVEIS = ['text', 'item']
 const GRUPO = 'group'
 
-// Blocos de um idioma (comGrupos) ou de um grupo: pelo menos um, todos de tipos conhecidos;
+// Blocos de um idioma (comGrupos) ou de um grupo: pelo menos um, tipos conhecidos, sem repetir os não repetíveis;
 // os grupos ({ type: GRUPO, contents[] }) só no primeiro nível e verificados da mesma forma.
 const verificarBlocos = (blocos, aqui, comGrupos) => {
   if (!blocos.length) throw new Error(`${aqui} não tem blocos`)
+  const vistos = new Set()
   for (const b of blocos) {
     if (b.type === GRUPO && comGrupos) {
       verificarBlocos(b.contents ?? [], `${aqui} (grupo)`, false)
       continue
     }
     if (!TIPOS_BLOCO.includes(b.type)) throw new Error(`${aqui} tem um bloco com tipo inválido: "${b.type ?? ''}"`)
+    if (REPETIVEIS.includes(b.type)) continue
+    if (vistos.has(b.type)) throw new Error(`${aqui} tem o tipo "${b.type}" repetido`)
+    vistos.add(b.type)
   }
 }
 
